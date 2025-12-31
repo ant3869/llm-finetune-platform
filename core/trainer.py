@@ -323,7 +323,7 @@ class Trainer:
             logging_steps=self.config.logging_steps,
             save_steps=self.config.save_steps,
             eval_steps=self.config.eval_steps if eval_dataset else None,
-            evaluation_strategy="steps" if eval_dataset else "no",
+            eval_strategy="steps" if eval_dataset else "no",
             save_strategy="steps",
             load_best_model_at_end=False,
             report_to=["tensorboard"],

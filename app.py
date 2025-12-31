@@ -148,7 +148,7 @@ def render_sidebar():
             # Check if step is accessible
             is_accessible = step_num <= st.session_state.current_step + 1
             
-            if is_accessible and step_num <= 3:  # Only first 3 steps implemented
+            if is_accessible:  # All 5 steps now implemented
                 if st.button(f"{status} {icon} {name}", key=f"nav_{step_num}", use_container_width=True):
                     st.session_state.current_step = step_num
                     st.rerun()
@@ -224,11 +224,9 @@ def render_main_content():
     elif step == 3:
         render_training_page()
     elif step == 4:
-        st.title("📊 Step 4: Evaluation")
-        st.info("🚧 Coming in Milestone 3 - Interactive model testing and comparison")
+        render_evaluation_page()
     elif step == 5:
-        st.title("📦 Step 5: Export")
-        st.info("🚧 Coming in Milestone 3 - Export fine-tuned model to GGUF")
+        render_export_page()
 
 
 def render_data_prep_page():
@@ -259,6 +257,26 @@ def render_training_page():
     except ImportError as e:
         st.error(f"Failed to load training page: {e}")
         st.info("Make sure ui/pages/training.py exists")
+
+
+def render_evaluation_page():
+    """Render evaluation/testing page - imported from ui/pages."""
+    try:
+        from ui.pages.evaluation import render_evaluation
+        render_evaluation()
+    except ImportError as e:
+        st.error(f"Failed to load evaluation page: {e}")
+        st.info("Make sure ui/pages/evaluation.py exists")
+
+
+def render_export_page():
+    """Render export page - imported from ui/pages."""
+    try:
+        from ui.pages.export import render_export
+        render_export()
+    except ImportError as e:
+        st.error(f"Failed to load export page: {e}")
+        st.info("Make sure ui/pages/export.py exists")
 
 
 def main():

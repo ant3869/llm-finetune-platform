@@ -175,9 +175,10 @@ The UI provides a guided 5-step workflow:
 
 - [x] CLI Training (Milestone 1)
 - [x] Web UI with Streamlit (Milestone 2)
-- [ ] Interactive model testing (Milestone 3)
-- [ ] GGUF export (Milestone 3)
+- [x] Interactive model testing (Milestone 3)
+- [x] Model export & GGUF conversion (Milestone 3)
 - [ ] More IT support templates (Milestone 4)
+- [ ] Batch inference & evaluation metrics (Milestone 4)
 
 ## License
 
