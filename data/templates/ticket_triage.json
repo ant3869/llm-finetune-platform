@@ -1,0 +1,17 @@
+[
+  {
+    "instruction": "Triage and categorize this IT support ticket",
+    "input": "Subject: Can't print to network printer\n\nUser: John Smith\nDepartment: Accounting\nPriority: Medium\n\nDescription: Since this morning, I haven't been able to print to the HP LaserJet on the 3rd floor. Other people seem to be printing fine. I've tried restarting my computer but it didn't help. I have a deadline for reports this afternoon.",
+    "output": "**Ticket Triage:**\n- Category: Hardware/Printing\n- Subcategory: Network Printer Connectivity\n- Priority: Medium (deadline impact)\n- Assignment: Desktop Support\n\n**Initial Analysis:**\n- Issue is user-specific (others can print)\n- Suggests local configuration issue\n- Not a printer hardware failure\n\n**Recommended Actions:**\n1. Check printer status in user's print queue\n2. Remove and re-add printer\n3. Verify network connectivity to printer IP\n4. Check for pending print jobs causing queue jam"
+  },
+  {
+    "instruction": "Triage and categorize this IT support ticket",
+    "input": "Subject: URGENT - Email server down\n\nUser: IT Alert System\nDepartment: Infrastructure\nPriority: Critical\n\nDescription: Monitoring detected Exchange server EX-PROD-01 is not responding. Multiple users reporting inability to send/receive emails. Server ping failing. Last known good state: 2 hours ago.",
+    "output": "**Ticket Triage:**\n- Category: Infrastructure/Email\n- Subcategory: Server Outage\n- Priority: P1 Critical (business-wide impact)\n- Assignment: Infrastructure Team - Immediate escalation\n\n**Initial Analysis:**\n- Complete server failure (ping failing)\n- Business-critical impact\n- 2-hour outage window\n\n**Recommended Actions:**\n1. Escalate to on-call infrastructure engineer immediately\n2. Check datacenter for hardware alerts\n3. Verify network path to server\n4. Prepare failover to backup mail server\n5. Send status communication to stakeholders"
+  },
+  {
+    "instruction": "Triage and categorize this IT support ticket",
+    "input": "Subject: New employee laptop setup\n\nUser: HR Department\nDepartment: Human Resources\nPriority: Low\n\nDescription: We have a new employee starting next Monday, Sarah Johnson in Marketing. She will need a laptop with standard marketing software, email access, and VPN. Please have everything ready by Friday.",
+    "output": "**Ticket Triage:**\n- Category: Request/New Hire\n- Subcategory: Equipment Provisioning\n- Priority: Low (5 business days lead time)\n- Assignment: Desktop Support - Provisioning Queue\n\n**Initial Analysis:**\n- Standard new hire request\n- Adequate lead time provided\n- Marketing department = specific software needs\n\n**Recommended Actions:**\n1. Allocate laptop from inventory\n2. Image with Marketing department template\n3. Create AD account and email\n4. Configure VPN access\n5. Install: Adobe Creative Suite, Office 365, Slack\n6. Schedule delivery/pickup for Friday"
+  }
+]

@@ -165,11 +165,23 @@ streamlit run app.py
 ```
 
 The UI provides a guided 5-step workflow:
-1. **Data Preparation** - Upload files or use IT support templates
+1. **Data Preparation** - Upload files or use IT support templates (8 templates available)
 2. **Model Selection** - Choose from recommended models or use custom
 3. **Training** - Configure and monitor training with real-time progress
-4. **Evaluation** - Test your fine-tuned model (coming soon)
-5. **Export** - Export to GGUF format (coming soon)
+4. **Evaluation** - Interactive chat testing + batch evaluation with BLEU/ROUGE metrics
+5. **Export** - Merge LoRA adapters, export guidance, HuggingFace Hub upload
+
+## IT Support Templates (Milestone 4)
+
+Pre-built templates in `data/templates/`:
+- **ServiceNow Tickets** - Ticket analysis and resolution
+- **Knowledge Articles** - KB-based Q&A format
+- **SOPs & Procedures** - Step-by-step guides
+- **Ticket Triage** - Priority & category assignment
+- **Incident Postmortems** - Root cause analysis reports
+- **Change Requests** - Change management & approvals
+- **Customer Communication** - Service incident updates
+- **Runbooks** - Alert handling procedures
 
 ## Roadmap
 
@@ -177,8 +189,10 @@ The UI provides a guided 5-step workflow:
 - [x] Web UI with Streamlit (Milestone 2)
 - [x] Interactive model testing (Milestone 3)
 - [x] Model export & GGUF conversion (Milestone 3)
-- [ ] More IT support templates (Milestone 4)
-- [ ] Batch inference & evaluation metrics (Milestone 4)
+- [x] More IT support templates (Milestone 4)
+- [x] Batch inference & evaluation metrics (Milestone 4)
+- [ ] Model comparison dashboard (Milestone 5)
+- [ ] Hyperparameter optimization (Milestone 5)
 
 ## License
 

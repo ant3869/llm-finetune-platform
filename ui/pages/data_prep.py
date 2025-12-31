@@ -129,9 +129,16 @@ def render_templates():
     cols = st.columns(3)
     
     template_info = {
+        # Original templates
         "servicenow_ticket": ("🎫", "ServiceNow Tickets", "Ticket analysis and resolution"),
         "knowledge_article": ("📚", "Knowledge Articles", "KB-based Q&A"),
         "sop_format": ("📋", "SOPs & Procedures", "Step-by-step guides"),
+        # New Milestone 4 templates
+        "ticket_triage": ("🏷️", "Ticket Triage", "Priority & category assignment"),
+        "incident_postmortem": ("📊", "Incident Postmortems", "Root cause analysis reports"),
+        "change_request": ("🔄", "Change Requests", "Change management & approvals"),
+        "customer_communication": ("💬", "Customer Communication", "Service incident updates"),
+        "runbook": ("📖", "Runbooks", "Alert handling procedures"),
     }
     
     for i, template_file in enumerate(template_files):

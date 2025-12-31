@@ -121,7 +121,7 @@ def render_sidebar():
     with st.sidebar:
         st.image("https://img.icons8.com/fluency/96/artificial-intelligence.png", width=80)
         st.title("LLM Fine-Tuning")
-        st.caption("v0.1.0 - Milestone 2")
+        st.caption("v0.4.0 - Milestone 4")
         
         st.divider()
         
