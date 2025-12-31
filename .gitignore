@@ -1,0 +1,84 @@
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Models and large files
+models/base/*.gguf
+models/base/*.bin
+models/adapters/run_*/
+*.safetensors
+*.gguf
+*.bin
+
+# Keep directory structure
+!models/base/.gitkeep
+!models/adapters/.gitkeep
+!data/uploads/.gitkeep
+!data/processed/.gitkeep
+
+# Data files (user uploads)
+data/uploads/*
+data/processed/*
+!data/uploads/.gitkeep
+!data/processed/.gitkeep
+!data/templates/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment variables
+.env
+.env.local
+
+# HuggingFace cache (optional - can be large)
+# ~/.cache/huggingface/
+
+# Temporary files
+*.tmp
+*.temp
+check_gpu.py

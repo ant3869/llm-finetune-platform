@@ -1,0 +1,116 @@
+# Local LLM Fine-Tuning Platform Configuration
+# =============================================
+
+# Paths Configuration
+paths:
+  models_base: "./models/base"          # Where local GGUF models are stored
+  adapters: "./models/adapters"         # Trained LoRA adapters output
+  merged: "./models/merged"             # Merged fine-tuned models
+  data_uploads: "./data/uploads"        # User uploaded datasets
+  data_processed: "./data/processed"    # Processed training data
+  templates: "./data/templates"         # IT support data templates
+  logs: "./logs/training_runs"          # Training metrics & logs
+
+# Model Settings
+model:
+  default_context_length: 2048
+  max_context_length: 4096
+  supported_formats:
+    - ".gguf"
+
+# Training Defaults (Optimized for 8GB VRAM)
+training:
+  # QLoRA Configuration
+  lora:
+    r: 16                              # LoRA rank (8-64 typical)
+    lora_alpha: 32                     # Alpha parameter (usually 2*r)
+    lora_dropout: 0.05                 # Dropout for regularization
+    target_modules:                    # Modules to apply LoRA
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+    bias: "none"
+    task_type: "CAUSAL_LM"
+  
+  # Quantization (4-bit for 8GB VRAM)
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_compute_dtype: "float16"
+    bnb_4bit_quant_type: "nf4"         # NormalFloat4 quantization
+    bnb_4bit_use_double_quant: true    # Nested quantization
+  
+  # Training Parameters
+  defaults:
+    epochs: 3
+    batch_size: 1                      # Small for 8GB VRAM
+    gradient_accumulation_steps: 16    # Effective batch = 16
+    learning_rate: 2.0e-4
+    warmup_ratio: 0.03
+    weight_decay: 0.001
+    max_seq_length: 512                # Shorter for memory
+    gradient_checkpointing: true       # Save VRAM
+    fp16: true
+    optim: "paged_adamw_32bit"         # Memory-efficient optimizer
+    logging_steps: 10
+    save_steps: 100
+    eval_steps: 50
+  
+  # Presets for different training modes
+  presets:
+    quick_test:
+      epochs: 1
+      max_steps: 50
+      batch_size: 1
+      gradient_accumulation_steps: 4
+      max_seq_length: 256
+      description: "Fast test run to verify setup"
+    
+    balanced:
+      epochs: 3
+      batch_size: 1
+      gradient_accumulation_steps: 8
+      max_seq_length: 512
+      description: "Good balance of quality and speed"
+    
+    thorough:
+      epochs: 5
+      batch_size: 1
+      gradient_accumulation_steps: 16
+      max_seq_length: 1024
+      description: "Thorough training for best results"
+
+# Dataset Configuration
+dataset:
+  formats:
+    - json
+    - jsonl
+    - csv
+    - txt
+    - pdf
+    - html
+  validation_split: 0.1                # 10% for validation
+  max_samples: null                    # null = use all samples
+  shuffle: true
+  seed: 42
+
+# UI Configuration
+ui:
+  theme: "dark"
+  page_title: "LLM Fine-Tuning Platform"
+  page_icon: "🤖"
+
+# Hardware Monitoring
+monitoring:
+  check_interval_seconds: 5
+  vram_warning_threshold: 0.9          # Warn at 90% VRAM usage
+  temp_warning_threshold: 80           # Warn at 80°C GPU temp
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  tensorboard: true

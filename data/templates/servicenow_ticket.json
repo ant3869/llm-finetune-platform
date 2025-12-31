@@ -1,0 +1,27 @@
+[
+  {
+    "instruction": "Summarize this ServiceNow ticket and suggest resolution steps",
+    "input": "INC0012345: User cannot access VPN\n\nDescription: User reports VPN connection fails with 'Connection timed out' error. Started happening after recent Windows update. User is working remotely and needs VPN access urgently.\n\nPriority: High\nCategory: Network\nAssigned Group: IT Support",
+    "output": "Summary: VPN connectivity failure occurring after Windows update. User experiencing timeout errors when attempting to connect.\n\nResolution Steps:\n1. Verify network connectivity by pinging gateway\n2. Check if VPN client is updated to latest version\n3. Clear VPN client cache and saved credentials\n4. Verify Windows Firewall isn't blocking VPN ports\n5. If issue persists, try reinstalling VPN client\n6. Escalate to Network team if reinstallation doesn't resolve"
+  },
+  {
+    "instruction": "Summarize this ServiceNow ticket and suggest resolution steps",
+    "input": "INC0012346: Outlook not syncing emails\n\nDescription: User's Outlook desktop client stopped syncing emails. Mobile Outlook app works fine. User has tried restarting Outlook multiple times.\n\nPriority: Medium\nCategory: Email\nAssigned Group: IT Support",
+    "output": "Summary: Outlook desktop client sync failure while mobile app functions normally, indicating client-specific issue.\n\nResolution Steps:\n1. Check Outlook connection status in system tray\n2. Verify Office 365 credentials haven't expired\n3. Run Outlook in Safe Mode to check for add-in conflicts\n4. Repair Office installation via Control Panel\n5. Clear Outlook cache folder\n6. If unresolved, create new Outlook profile"
+  },
+  {
+    "instruction": "Based on this knowledge article, answer the user's question",
+    "input": "KB Article: Password Reset Procedures\n\nContent: Enterprise password reset can be performed via self-service portal at password.company.com. Users must verify identity using registered phone number or security questions. Passwords must be minimum 12 characters with uppercase, lowercase, number, and special character. Passwords expire every 90 days. Account locks after 5 failed attempts.\n\nQuestion: How do I unlock my account after too many failed login attempts?",
+    "output": "To unlock your account after too many failed login attempts:\n\n1. Wait 30 minutes - accounts automatically unlock after the lockout period\n2. If urgent, visit password.company.com and select 'Unlock Account'\n3. Verify your identity using your registered phone number or security questions\n4. Once unlocked, you can attempt to log in again\n5. If you've forgotten your password, use the 'Forgot Password' option to reset it\n\nNote: If you continue to experience issues, contact the IT Help Desk."
+  },
+  {
+    "instruction": "Explain how to perform this procedure based on the SOP",
+    "input": "SOP: New Employee Laptop Setup\n\nProcedure: How do I configure a new laptop for a new employee?",
+    "output": "To configure a new laptop for a new employee, follow these steps:\n\n1. **Hardware Setup**\n   - Unbox and inspect laptop for damage\n   - Connect to power and network\n\n2. **Initial Configuration**\n   - Power on and complete Windows OOBE\n   - Join to corporate domain (domain.company.com)\n   - Install latest Windows updates\n\n3. **Software Installation**\n   - Install Microsoft Office suite via Company Portal\n   - Install VPN client and configure with corporate settings\n   - Install required department-specific software\n   - Install endpoint protection (already pushed via Intune)\n\n4. **Security Configuration**\n   - Enable BitLocker encryption\n   - Configure Windows Hello for Business\n   - Set up MFA in Microsoft Authenticator\n\n5. **Final Steps**\n   - Create local admin account for IT support\n   - Document asset tag and assign to user in ServiceNow\n   - Provide user with setup guide and IT contact info"
+  },
+  {
+    "instruction": "Analyze this error and suggest troubleshooting steps",
+    "input": "Error: DRIVER_IRQL_NOT_LESS_OR_EQUAL\n\nContext: Blue screen error appearing randomly on user's workstation. Started after installing new USB webcam. System: Windows 11, Dell Latitude 5520.",
+    "output": "Analysis: This BSOD error typically indicates a driver-related issue accessing memory incorrectly. The timing suggests the new webcam driver may be the cause.\n\nTroubleshooting Steps:\n\n1. **Immediate Actions**\n   - Disconnect the USB webcam\n   - Boot into Safe Mode if system is unstable\n\n2. **Driver Investigation**\n   - Open Event Viewer > Windows Logs > System\n   - Look for critical errors around crash time\n   - Check Device Manager for driver conflicts (yellow warnings)\n\n3. **Resolution Options**\n   - Uninstall webcam driver via Device Manager\n   - Download latest driver from manufacturer website\n   - Run Windows Update for latest system drivers\n   - Use Driver Verifier to identify problematic driver\n\n4. **If Issue Persists**\n   - Run 'sfc /scannow' to check system files\n   - Run memory diagnostic (mdsched.exe)\n   - Consider System Restore to pre-webcam state\n\n5. **Prevention**\n   - Always download drivers from official sources\n   - Test new hardware on non-critical systems first"
+  }
+]
