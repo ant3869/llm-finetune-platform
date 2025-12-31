@@ -2,6 +2,7 @@
 Model Selection Page - Step 2
 
 Select HuggingFace model for fine-tuning and configure settings.
+Supports both online HuggingFace models and offline/local models.
 """
 
 import streamlit as st
@@ -72,6 +73,9 @@ def render_model_select():
     st.title("🤖 Step 2: Model Selection")
     st.markdown("Choose a base model for fine-tuning. Models will be loaded with 4-bit quantization to fit in 8GB VRAM.")
     
+    # Network status warning
+    render_network_status()
+    
     # Check prerequisites
     if not st.session_state.training_samples:
         st.warning("⚠️ Please load training data first (Step 1)")
@@ -86,15 +90,18 @@ def render_model_select():
     st.divider()
     
     # Model selection tabs
-    tab1, tab2, tab3 = st.tabs(["🌟 Recommended Models", "📁 Local GGUF Models", "✏️ Custom Model"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🌟 Recommended Models", "📁 Local Models", "📦 Offline Downloads", "✏️ Custom Model"])
     
     with tab1:
         render_recommended_models()
     
     with tab2:
-        render_local_gguf_models()
+        render_local_models()
     
     with tab3:
+        render_offline_downloads()
+    
+    with tab4:
         render_custom_model()
     
     # Show selected model info
@@ -115,6 +122,214 @@ def render_model_select():
             if st.button("Next: Training →", type="primary", use_container_width=True):
                 st.session_state.current_step = 3
                 st.rerun()
+
+
+def render_network_status():
+    """Show network/HuggingFace connectivity status."""
+    import os
+    
+    offline_mode = os.environ.get("HF_HUB_OFFLINE") == "1" or os.environ.get("TRANSFORMERS_OFFLINE") == "1"
+    
+    if offline_mode:
+        st.info("🔌 **Offline Mode Enabled** - Using local models only. See the 'Offline Downloads' tab for help.")
+    else:
+        # Quick connectivity check (optional, can be slow)
+        with st.expander("🌐 Network Status", expanded=False):
+            st.markdown("""
+            **Can't connect to HuggingFace?** 
+            - Use the **Offline Downloads** tab for instructions
+            - Or use **Local Models** if you have pre-downloaded files
+            - Set `HF_HUB_OFFLINE=1` environment variable to enable offline mode
+            """)
+
+
+def render_local_models():
+    """Render local models browser (both GGUF and HuggingFace cache)."""
+    st.subheader("📁 Local Models")
+    st.markdown("Use models already downloaded to your machine - no internet required.")
+    
+    try:
+        from core.offline_models import OfflineModelManager
+        manager = OfflineModelManager()
+        local_models = manager.scan_local_models()
+    except ImportError:
+        # Fallback to basic GGUF scanning
+        render_local_gguf_models()
+        return
+    
+    # GGUF Models Section
+    st.markdown("### GGUF Models (Inference)")
+    if local_models["gguf"]:
+        for model in local_models["gguf"]:
+            col1, col2, col3 = st.columns([3, 1, 1])
+            with col1:
+                st.markdown(f"**{model['name']}**")
+                st.caption(f"📁 {model['path']}")
+            with col2:
+                st.caption(f"{model['size_gb']:.2f} GB")
+            with col3:
+                if st.button("Select", key=f"local_gguf_{model['name']}", use_container_width=True):
+                    st.session_state.selected_gguf = model["path"]
+                    st.session_state.show_hf_mapping = True
+                    st.rerun()
+    else:
+        st.info("No GGUF models found. Place `.gguf` files in `./models/base/`")
+    
+    st.divider()
+    
+    # HuggingFace Models Section  
+    st.markdown("### HuggingFace Models (Training)")
+    if local_models["huggingface"]:
+        for model in local_models["huggingface"]:
+            col1, col2, col3 = st.columns([3, 1, 1])
+            with col1:
+                st.markdown(f"**{model['name']}**")
+                st.caption(f"📁 {model['path']}")
+            with col2:
+                st.caption(f"{model['size_gb']:.2f} GB")
+            with col3:
+                if st.button("Use", key=f"local_hf_{model['name']}", type="primary", use_container_width=True):
+                    # Use local path directly
+                    st.session_state.selected_model = model["path"]
+                    st.session_state.model_config = {
+                        "name": model["name"],
+                        "id": model["path"],
+                        "size": f"{model['size_gb']:.1f}GB",
+                        "vram": "~4-6GB",
+                        "description": "Local HuggingFace model",
+                        "recommended": False,
+                        "is_local": True,
+                    }
+                    st.success(f"✅ Selected local model: {model['name']}")
+                    st.rerun()
+    else:
+        st.info("""
+        No locally cached HuggingFace models found.
+        
+        **To add local models:**
+        1. Download on a machine with internet access
+        2. Copy to `./models/cache/huggingface/`
+        3. See the 'Offline Downloads' tab for detailed instructions
+        """)
+    
+    # Show HF mapping dialog for GGUF
+    if st.session_state.get("show_hf_mapping"):
+        _render_hf_mapping_dialog()
+
+
+def _render_hf_mapping_dialog():
+    """Render HuggingFace model mapping dialog for GGUF files."""
+    st.markdown("---")
+    st.subheader("🔗 Select Training Model for GGUF")
+    
+    loader = ModelLoader()
+    gguf_path = st.session_state.get("selected_gguf", "")
+    gguf_name = Path(gguf_path).stem if gguf_path else ""
+    
+    st.info(f"Selected GGUF: **{gguf_name}**")
+    st.markdown("Select the corresponding HuggingFace model for training:")
+    
+    # Try to auto-detect
+    suggested_hf = loader.get_hf_model_id(gguf_name) if gguf_name else None
+    
+    hf_options = [
+        "microsoft/phi-2",
+        "microsoft/phi-3-mini-4k-instruct", 
+        "ibm-granite/granite-3.0-8b-instruct",
+        "mistralai/Mistral-7B-v0.1",
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        "Custom...",
+    ]
+    
+    default_idx = hf_options.index(suggested_hf) if suggested_hf in hf_options else 0
+    
+    selected_hf = st.selectbox("HuggingFace Model", hf_options, index=default_idx)
+    
+    if selected_hf == "Custom...":
+        selected_hf = st.text_input("Enter Model ID", placeholder="org/model-name")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Cancel", use_container_width=True):
+            st.session_state.show_hf_mapping = False
+            st.session_state.selected_gguf = None
+            st.rerun()
+    with col2:
+        if st.button("✓ Confirm", type="primary", use_container_width=True):
+            if selected_hf and selected_hf != "Custom...":
+                st.session_state.selected_model = selected_hf
+                st.session_state.model_config = {
+                    "name": Path(selected_hf).name,
+                    "id": selected_hf,
+                    "size": "Unknown",
+                    "vram": "~4-6GB",
+                    "description": f"Training model for {gguf_name}",
+                    "gguf_path": gguf_path,
+                }
+                st.session_state.show_hf_mapping = False
+                st.success(f"✅ Selected {selected_hf}")
+                st.rerun()
+
+
+def render_offline_downloads():
+    """Render offline download instructions and management."""
+    st.subheader("📦 Offline Model Downloads")
+    st.markdown("Get models when HuggingFace is blocked by your network.")
+    
+    try:
+        from core.offline_models import OfflineModelManager
+        manager = OfflineModelManager()
+    except ImportError as e:
+        st.error(f"Offline module not available: {e}")
+        return
+    
+    # Quick status
+    available = manager.get_available_offline_models()
+    downloaded = sum(1 for m in available if m["is_downloaded"])
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Available Models", len(available))
+    with col2:
+        st.metric("Downloaded", downloaded)
+    
+    st.divider()
+    
+    # Model list with download instructions
+    st.markdown("### Available for Offline Download")
+    
+    for model in available:
+        with st.container():
+            col1, col2, col3 = st.columns([3, 1, 1])
+            
+            with col1:
+                status = "✅" if model["is_downloaded"] else "⬇️"
+                st.markdown(f"**{status} {model['name']}**")
+                st.caption(f"{model['description']} | {model['file_size_gb']:.1f} GB")
+            
+            with col2:
+                st.caption(f"Format: {model['format'].upper()}")
+            
+            with col3:
+                if not model["is_downloaded"]:
+                    if st.button("📋 Get", key=f"offline_inst_{model['key']}", use_container_width=True):
+                        st.session_state[f"show_offline_{model['key']}"] = True
+        
+        # Show instructions if requested
+        if st.session_state.get(f"show_offline_{model['key']}", False):
+            with st.expander(f"📋 Download Instructions for {model['name']}", expanded=True):
+                instructions = manager.generate_download_instructions(model["key"])
+                st.code(instructions, language="text")
+                
+                if st.button("Close", key=f"close_offline_{model['key']}"):
+                    st.session_state[f"show_offline_{model['key']}"] = False
+                    st.rerun()
+    
+    st.divider()
+    
+    # Full workflow guide
+    with st.expander("📖 Complete Offline Workflow Guide"):
+        st.code(manager.get_offline_workflow_guide(), language="text")
 
 
 def render_gpu_status():

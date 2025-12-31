@@ -3,6 +3,7 @@ Data Preparation Page - Step 1
 
 Upload, preview, and validate training data.
 Supports JSON, JSONL, CSV, TXT, PDF, and HTML files.
+Includes advanced data cleaning options.
 """
 
 import streamlit as st
@@ -23,7 +24,7 @@ def render_data_prep():
     st.markdown("Upload your training data or use pre-built IT support templates.")
     
     # Create tabs for different input methods
-    tab1, tab2, tab3 = st.tabs(["📤 Upload File", "📋 Use Template", "✏️ Manual Entry"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📤 Upload File", "📋 Use Template", "✏️ Manual Entry", "🧹 Data Cleaning"])
     
     with tab1:
         render_file_upload()
@@ -33,6 +34,9 @@ def render_data_prep():
     
     with tab3:
         render_manual_entry()
+    
+    with tab4:
+        render_data_cleaning()
     
     # Show loaded data preview
     if st.session_state.training_samples:
@@ -300,3 +304,203 @@ def render_data_preview():
         
         st.markdown("**Formatted Prompt:**")
         st.code(selected.format_prompt("alpaca"), language="text")
+
+
+def render_data_cleaning():
+    """Render the data cleaning options tab."""
+    st.subheader("🧹 Data Cleaning")
+    st.markdown("Clean and preprocess your loaded training data for better quality.")
+    
+    if not st.session_state.training_samples:
+        st.info("📤 Load data first using the Upload or Template tabs, then return here to clean it.")
+        return
+    
+    st.success(f"✅ {len(st.session_state.training_samples)} samples loaded and ready for cleaning")
+    
+    # Cleaning options in expandable sections
+    with st.expander("🔧 Quick Cleaning Presets", expanded=True):
+        preset = st.radio(
+            "Select a cleaning preset",
+            ["None", "Minimal", "Standard", "Aggressive", "IT Support"],
+            horizontal=True,
+            help="Presets apply common cleaning operations"
+        )
+        
+        preset_descriptions = {
+            "None": "No automatic cleaning",
+            "Minimal": "Unicode normalization, whitespace cleanup",
+            "Standard": "Minimal + HTML removal, quote normalization",
+            "Aggressive": "Standard + URL/email removal, deduplication",
+            "IT Support": "Optimized for ServiceNow/IT ticket data",
+        }
+        st.caption(preset_descriptions.get(preset, ""))
+    
+    with st.expander("✂️ Delimiter/Prefix Removal", expanded=False):
+        st.markdown("""
+        Remove text before or after a delimiter on each line.  
+        Example: `"XX | Actual text"` → `"Actual text"` with delimiter `"XX | "`
+        """)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            prefix_delimiter = st.text_input(
+                "Prefix delimiter to remove",
+                placeholder="e.g., XX | or >>",
+                help="Everything before and including this will be removed from each line"
+            )
+        with col2:
+            suffix_delimiter = st.text_input(
+                "Suffix delimiter to remove", 
+                placeholder="e.g., | END or ##",
+                help="Everything after and including this will be removed from each line"
+            )
+    
+    with st.expander("🔍 Pattern Removal (Regex)", expanded=False):
+        st.markdown("Remove text matching regex patterns. One pattern per line.")
+        patterns_text = st.text_area(
+            "Patterns to remove",
+            placeholder="\\d{4}-\\d{2}-\\d{2}\nINC\\d+\n\\[.*?\\]",
+            help="Enter regex patterns, one per line"
+        )
+        
+        st.markdown("**Common patterns:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.code("\\d{4}-\\d{2}-\\d{2}  # Dates", language="text")
+            st.code("INC\\d+  # Incident numbers", language="text")
+        with col2:
+            st.code("\\[.*?\\]  # Bracketed text", language="text")
+            st.code("^\\s*#.*$  # Comment lines", language="text")
+    
+    with st.expander("⚙️ Advanced Options", expanded=False):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            normalize_unicode = st.checkbox("Normalize Unicode", value=True)
+            normalize_whitespace = st.checkbox("Normalize Whitespace", value=True)
+            remove_html = st.checkbox("Remove HTML Tags", value=True)
+            remove_markdown = st.checkbox("Remove Markdown", value=False)
+        
+        with col2:
+            remove_urls = st.checkbox("Remove URLs", value=False)
+            remove_emails = st.checkbox("Remove Emails", value=False)
+            remove_duplicates = st.checkbox("Remove Duplicates", value=True)
+            lowercase = st.checkbox("Convert to Lowercase", value=False)
+        
+        st.markdown("**Quality Filters:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            min_length = st.number_input("Min output length (chars)", value=10, min_value=0)
+        with col2:
+            min_words = st.number_input("Min word count", value=3, min_value=0)
+    
+    # Preview and Apply buttons
+    st.divider()
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col1:
+        preview_btn = st.button("👁️ Preview Changes", use_container_width=True)
+    
+    with col2:
+        apply_btn = st.button("✅ Apply Cleaning", type="primary", use_container_width=True)
+    
+    # Handle preview/apply
+    if preview_btn or apply_btn:
+        try:
+            from core.data_cleaner import CleaningConfig, DataCleaningPipeline
+            
+            # Build config from UI options
+            patterns_to_remove = []
+            if patterns_text:
+                patterns_to_remove = [p.strip() for p in patterns_text.split('\n') if p.strip()]
+            
+            # Map preset to config
+            preset_map = {
+                "None": None,
+                "Minimal": "minimal",
+                "Standard": "standard", 
+                "Aggressive": "aggressive",
+                "IT Support": "it_support",
+            }
+            
+            if preset != "None":
+                pipeline = DataCleaningPipeline(preset=preset_map[preset])
+                config = pipeline.config
+            else:
+                config = CleaningConfig()
+            
+            # Apply custom overrides
+            if prefix_delimiter:
+                config.prefix_delimiter = prefix_delimiter
+            if suffix_delimiter:
+                config.suffix_delimiter = suffix_delimiter
+            if patterns_to_remove:
+                config.patterns_to_remove = patterns_to_remove
+            
+            # Advanced options (only if not using preset or want to override)
+            config.normalize_unicode = normalize_unicode
+            config.normalize_whitespace = normalize_whitespace
+            config.remove_html_tags = remove_html
+            config.remove_markdown = remove_markdown
+            config.remove_urls = remove_urls
+            config.remove_emails = remove_emails
+            config.remove_duplicates = remove_duplicates
+            config.lowercase = lowercase
+            config.min_length = min_length
+            config.min_word_count = min_words
+            
+            # Create pipeline and clean
+            pipeline = DataCleaningPipeline(config=config)
+            cleaned_samples = pipeline.clean_samples(st.session_state.training_samples)
+            stats = pipeline.get_stats()
+            
+            # Show results
+            st.markdown("### Cleaning Results")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Original", stats["processed"])
+            with col2:
+                st.metric("Passed", stats["passed"])
+            with col3:
+                st.metric("Filtered", stats["filtered"])
+            with col4:
+                st.metric("Pass Rate", f"{stats['pass_rate']:.1%}")
+            
+            if stats["filter_reasons"]:
+                with st.expander("📊 Filter Reasons"):
+                    for reason, count in stats["filter_reasons"].items():
+                        st.write(f"• {reason}: {count}")
+            
+            # Preview comparison
+            if cleaned_samples and preview_btn:
+                st.markdown("### Before/After Comparison")
+                
+                orig = st.session_state.training_samples[0]
+                cleaned = cleaned_samples[0]
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**Original:**")
+                    st.text(orig.output[:300])
+                with col2:
+                    st.markdown("**Cleaned:**")
+                    st.text(cleaned.output[:300])
+            
+            # Apply changes
+            if apply_btn and cleaned_samples:
+                st.session_state.training_samples = cleaned_samples
+                handler = DatasetHandler()
+                st.session_state.dataset_stats = handler.get_statistics(cleaned_samples)
+                st.success(f"✅ Applied cleaning! {len(cleaned_samples)} samples remaining.")
+                st.rerun()
+            elif apply_btn and not cleaned_samples:
+                st.error("All samples were filtered out! Adjust your cleaning settings.")
+                
+        except ImportError as e:
+            st.error(f"Missing cleaning module: {e}")
+        except Exception as e:
+            st.error(f"Cleaning failed: {e}")
+            import traceback
+            st.code(traceback.format_exc())
+

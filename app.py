@@ -22,67 +22,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for better UI
-st.markdown("""
-<style>
-    /* Main container */
-    .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        padding-top: 1rem;
-    }
-    
-    /* Card-like containers */
-    .stAlert {
-        border-radius: 10px;
-    }
-    
-    /* Progress bar styling */
-    .stProgress > div > div {
-        background-color: #4CAF50;
-    }
-    
-    /* Metric styling */
-    [data-testid="stMetricValue"] {
-        font-size: 1.5rem;
-    }
-    
-    /* Tab styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        padding: 10px 20px;
-        border-radius: 5px;
-    }
-    
-    /* Success/error message styling */
-    .success-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-    }
-    
-    .error-box {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-    }
-    
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
+# Apply custom Tailwind-inspired styling
+from ui.styles import apply_theme, render_step_indicator
+apply_theme()
 
 
 def init_session_state():
@@ -121,7 +63,7 @@ def render_sidebar():
     with st.sidebar:
         st.image("https://img.icons8.com/fluency/96/artificial-intelligence.png", width=80)
         st.title("LLM Fine-Tuning")
-        st.caption("v0.4.0 - Milestone 4")
+        st.caption("v0.5.0 - Data Cleaning & Offline Support")
         
         st.divider()
         

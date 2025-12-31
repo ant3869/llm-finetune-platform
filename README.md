@@ -7,8 +7,11 @@ A user-friendly platform for fine-tuning local LLMs on consumer hardware (8GB NV
 - **Memory Efficient**: QLoRA training fits 7B-13B models in 8GB VRAM
 - **Multiple Data Formats**: JSON, JSONL, CSV, TXT, PDF, HTML (Confluence)
 - **IT Support Templates**: Pre-built formats for ServiceNow tickets, SOPs, Knowledge Articles
+- **Advanced Data Cleaning**: Delimiter removal, pattern matching, deduplication, quality filters
+- **Offline Model Support**: Download models at home, use at work without internet
 - **Simple CLI**: Command-line training without web UI dependencies
 - **Real-time Progress**: Training metrics and VRAM monitoring
+- **Modern UI**: Tailwind-inspired styling for a polished experience
 
 ## Quick Start
 
@@ -191,8 +194,50 @@ Pre-built templates in `data/templates/`:
 - [x] Model export & GGUF conversion (Milestone 3)
 - [x] More IT support templates (Milestone 4)
 - [x] Batch inference & evaluation metrics (Milestone 4)
+- [x] Advanced data cleaning pipeline (v0.5.0)
+- [x] Offline model download support (v0.5.0)
+- [x] Tailwind-inspired UI styling (v0.5.0)
 - [ ] Model comparison dashboard (Milestone 5)
 - [ ] Hyperparameter optimization (Milestone 5)
+
+## Advanced Data Cleaning (v0.5.0)
+
+The data cleaning tab provides powerful text preprocessing:
+
+**Preset Cleaning Modes:**
+- **Minimal** - Light cleanup (whitespace, unicode)
+- **Standard** - Balanced cleaning for most use cases
+- **Aggressive** - Heavy cleaning for messy data
+- **IT Support** - Optimized for ticket/KB data
+
+**Features:**
+- **Delimiter Removal**: Remove prefixes like `XX |` or `TICKET:` from text
+- **Pattern Matching**: Custom regex patterns for targeted removal
+- **Quality Filters**: Min/max length, filter empty/duplicates
+- **Text Normalization**: Unicode, whitespace, HTML stripping
+
+## Offline Model Support (v0.5.0)
+
+For environments without HuggingFace access (corporate networks):
+
+**Getting Models:**
+1. Go to **Model Selection** → **Offline Downloads** tab
+2. Click "Get" on a model for download instructions
+3. Download at home, transfer via USB to work machine
+4. Place files in `./models/base/` (GGUF) or `./models/cache/huggingface/` (HF)
+
+**Supported Offline Models:**
+- Phi-2 GGUF (1.8GB) - Great for testing
+- Mistral-7B GGUF (4.0GB) - Best quality
+- Granite-3B GGUF (1.9GB) - IBM's efficient model
+- Llama-2-7B GGUF (3.8GB) - Meta's foundation model
+
+**Environment Variables:**
+```bash
+# Enable offline mode
+set HF_HUB_OFFLINE=1
+set TRANSFORMERS_OFFLINE=1
+```
 
 ## License
 
