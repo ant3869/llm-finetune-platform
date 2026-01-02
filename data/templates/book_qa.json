@@ -1,0 +1,17 @@
+[
+  {
+    "instruction": "Answer this question based on the provided book excerpt.",
+    "input": "Book: 'Thinking, Fast and Slow' by Daniel Kahneman\n\nExcerpt: System 1 operates automatically and quickly, with little or no effort and no sense of voluntary control. System 2 allocates attention to the effortful mental activities that demand it, including complex computations. The operations of System 2 are often associated with the subjective experience of agency, choice, and concentration.\n\nQuestion: What is the difference between System 1 and System 2 thinking?",
+    "output": "According to the excerpt from 'Thinking, Fast and Slow':\n\n**System 1 (Fast Thinking):**\n- Operates automatically and quickly\n- Requires little or no effort\n- No sense of voluntary control\n- Intuitive and instinctive\n\n**System 2 (Slow Thinking):**\n- Requires deliberate attention allocation\n- Handles effortful mental activities and complex computations\n- Associated with feelings of agency and choice\n- Requires concentration\n\nIn essence, System 1 is our automatic, intuitive mode while System 2 is our deliberate, analytical mode."
+  },
+  {
+    "instruction": "Answer this question based on the provided book excerpt.",
+    "input": "Book: 'Atomic Habits' by James Clear\n\nExcerpt: Every action you take is a vote for the type of person you wish to become. No single instance will transform your beliefs, but as the votes build up, so does the evidence of your new identity. This is one reason why meaningful change does not require radical change.\n\nQuestion: How do small actions contribute to identity change according to this book?",
+    "output": "According to James Clear in 'Atomic Habits':\n\n**Key Concept: Actions as Votes**\n- Each action is like casting a vote for your identity\n- No single action transforms you overnight\n- Cumulative actions build evidence of who you're becoming\n\n**Why This Matters:**\n- Change doesn't require dramatic, radical shifts\n- Small, consistent actions compound over time\n- Your identity emerges from the pattern of your behaviors\n- Every small habit is a vote for the person you want to be\n\nThe takeaway is that meaningful transformation comes from the accumulation of small, consistent actions rather than dramatic one-time changes."
+  },
+  {
+    "instruction": "Answer this question based on the provided book excerpt.",
+    "input": "Book: 'The Psychology of Money' by Morgan Housel\n\nExcerpt: Getting money and keeping money are two different skills. Getting money requires taking risks, being optimistic, and putting yourself out there. Keeping money requires the opposite of taking risk. It requires humility, and fear that what you've made can be taken away from you just as fast.\n\nQuestion: What skills are needed for getting vs keeping money?",
+    "output": "According to Morgan Housel in 'The Psychology of Money':\n\n**Getting Money Requires:**\n- Taking risks\n- Being optimistic\n- Putting yourself out there\n- Bold action and initiative\n\n**Keeping Money Requires:**\n- Avoiding excessive risk\n- Humility about your success\n- Fear/awareness that wealth can disappear quickly\n- Caution and preservation mindset\n\n**Key Insight:**\nThese are fundamentally different and sometimes opposing skills. The aggressive mindset that helps you build wealth can actually destroy it if maintained. Successful long-term wealth requires transitioning from an acquisition mindset to a preservation mindset."
+  }
+]

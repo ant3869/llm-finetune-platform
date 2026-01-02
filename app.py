@@ -24,7 +24,9 @@ st.set_page_config(
 
 # Apply custom Tailwind-inspired styling
 from ui.styles import apply_theme, render_step_indicator
+from ui.help_system import init_help_system, render_help_footer
 apply_theme()
+init_help_system()
 
 
 def init_session_state():
@@ -63,7 +65,7 @@ def render_sidebar():
     with st.sidebar:
         st.image("https://img.icons8.com/fluency/96/artificial-intelligence.png", width=80)
         st.title("LLM Fine-Tuning")
-        st.caption("v0.5.0 - Data Cleaning & Offline Support")
+        st.caption("v0.6.0 - Model Comparison & HPO")
         
         st.divider()
         
@@ -96,6 +98,25 @@ def render_sidebar():
                     st.rerun()
             else:
                 st.button(f"{status} {icon} {name}", key=f"nav_{step_num}", use_container_width=True, disabled=True)
+        
+        st.divider()
+        
+        # Advanced Tools section (Milestone 5)
+        st.subheader("🔬 Advanced Tools")
+        
+        advanced_tools = [
+            ("📊", "Model Comparison", 6),
+            ("🔬", "HPO (Auto-Tune)", 7),
+            ("🧪", "Post-Tuning Tests", 8),
+        ]
+        
+        for icon, name, step_num in advanced_tools:
+            is_active = st.session_state.current_step == step_num
+            status = "👉" if is_active else "🔧"
+            
+            if st.button(f"{status} {icon} {name}", key=f"nav_{step_num}", use_container_width=True):
+                st.session_state.current_step = step_num
+                st.rerun()
         
         st.divider()
         
@@ -169,6 +190,12 @@ def render_main_content():
         render_evaluation_page()
     elif step == 5:
         render_export_page()
+    elif step == 6:
+        render_model_compare_page()
+    elif step == 7:
+        render_hpo_page()
+    elif step == 8:
+        render_post_tuning_test_page()
 
 
 def render_data_prep_page():
@@ -221,6 +248,36 @@ def render_export_page():
         st.info("Make sure ui/pages/export.py exists")
 
 
+def render_model_compare_page():
+    """Render model comparison dashboard - imported from ui/pages."""
+    try:
+        from ui.pages.model_compare import render_model_compare
+        render_model_compare()
+    except ImportError as e:
+        st.error(f"Failed to load model comparison page: {e}")
+        st.info("Make sure ui/pages/model_compare.py exists")
+
+
+def render_hpo_page():
+    """Render hyperparameter optimization page - imported from ui/pages."""
+    try:
+        from ui.pages.hyperparameter_opt import render_hyperparameter_optimization
+        render_hyperparameter_optimization()
+    except ImportError as e:
+        st.error(f"Failed to load HPO page: {e}")
+        st.info("Make sure ui/pages/hyperparameter_opt.py exists")
+
+
+def render_post_tuning_test_page():
+    """Render post-tuning test suite page - imported from ui/pages."""
+    try:
+        from ui.pages.post_tuning_test import render_post_tuning_test
+        render_post_tuning_test()
+    except ImportError as e:
+        st.error(f"Failed to load post-tuning test page: {e}")
+        st.info("Make sure ui/pages/post_tuning_test.py exists")
+
+
 def main():
     """Main application entry point."""
     # Initialize session state
@@ -231,6 +288,9 @@ def main():
     
     # Render main content
     render_main_content()
+    
+    # Render help footer (at the bottom)
+    render_help_footer()
 
 
 if __name__ == "__main__":

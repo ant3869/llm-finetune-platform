@@ -1,0 +1,17 @@
+[
+  {
+    "instruction": "Clean and format this raw text extracted from a PDF book for training purposes. Remove artifacts and structure the content properly.",
+    "input": "Raw PDF Text:\n\n   Chapter   3  -  Data   Structures\n\n\nArrays  and  lists  are  fundamental...\n\n\n\n42    |    Chapter 3\n\n\n\n     An array is a  collection of elements identified\nby index or key.  Arrays    are  stored  in   contiguous\nmemory  locations.     This  makes   accessing\n\nelements   by   index    very    fast   (O(1)    time).\n\n\n Page  43",
+    "output": "## Chapter 3 - Data Structures\n\nArrays and lists are fundamental data structures in computer science.\n\nAn array is a collection of elements identified by index or key. Arrays are stored in contiguous memory locations. This makes accessing elements by index very fast (O(1) time).\n\n---\n*Note: Text cleaned from PDF source, Chapter 3, pages 42-43*"
+  },
+  {
+    "instruction": "Clean and format this raw text extracted from a PDF book for training purposes. Remove artifacts and structure the content properly.",
+    "input": "Raw PDF Text:\n\nTHE    HISTORY    OF    ANCIENT    ROME\n\n\n\n          By   Dr.    Marcus   Williams\n\n\n\n              © 2023    All  rights  reserved\n\n\n\n              Chapter    1:   The   Founding\n\n\nAccording    to    legend,     Rome    was\n\nfounded   in    753    BC    by   twin   brothers\n\nRomulus    and    Remus.    The   brothers\n\n\n-15-\n\nwere     said    to   have    been   raised    by\n\na    she-wolf.   Modern    archaeology",
+    "output": "# The History of Ancient Rome\n**By Dr. Marcus Williams**\n\n---\n\n## Chapter 1: The Founding\n\nAccording to legend, Rome was founded in 753 BC by twin brothers Romulus and Remus. The brothers were said to have been raised by a she-wolf. Modern archaeology continues to investigate the historical truth behind these founding myths.\n\n---\n*Note: Text cleaned from PDF source, page 15*"
+  },
+  {
+    "instruction": "Clean and format this raw text extracted from a PDF book for training purposes. Remove artifacts and structure the content properly.",
+    "input": "Raw PDF Text:\n\n\n\n\n        INTRODUCTION     TO      PSYCHOLOGY\n\n\n\n      Learning   Objectives:\n\n      •   Understand    the   basic    principles\n      •   Identify   major   schools    of   thought\n      •   Apply   concepts    to    real-world\n\n\n    The    field    of    psychology    emerged\n\nas   a    distinct   discipline     in     1879\n\nwhen    Wilhelm   Wundt    established\n\nthe     first     psychology     laboratory\n\n     in     Leipzig,     Germany.     \n\n   [Figure    1.1:    Wundt's   Laboratory]\n\n\nThis    marked    the   beginning...",
+    "output": "# Introduction to Psychology\n\n## Learning Objectives\n- Understand the basic principles of psychology\n- Identify major schools of thought\n- Apply concepts to real-world situations\n\n---\n\nThe field of psychology emerged as a distinct discipline in 1879 when Wilhelm Wundt established the first psychology laboratory in Leipzig, Germany.\n\n*[Figure 1.1: Wundt's Laboratory - image reference]*\n\nThis marked the beginning of psychology as a formal scientific discipline.\n\n---\n*Note: Text cleaned from PDF source with figure reference preserved*"
+  }
+]

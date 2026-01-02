@@ -16,6 +16,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from core.dataset_handler import DatasetHandler, TrainingSample
+from ui.components.hf_datasets_browser import render_hf_datasets_browser
 
 
 def render_data_prep():
@@ -24,7 +25,13 @@ def render_data_prep():
     st.markdown("Upload your training data or use pre-built IT support templates.")
     
     # Create tabs for different input methods
-    tab1, tab2, tab3, tab4 = st.tabs(["📤 Upload File", "📋 Use Template", "✏️ Manual Entry", "🧹 Data Cleaning"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📤 Upload File", 
+        "📋 Use Template", 
+        "🤗 HuggingFace", 
+        "✏️ Manual Entry", 
+        "🧹 Data Cleaning"
+    ])
     
     with tab1:
         render_file_upload()
@@ -33,9 +40,12 @@ def render_data_prep():
         render_templates()
     
     with tab3:
-        render_manual_entry()
+        render_hf_datasets_browser()
     
     with tab4:
+        render_manual_entry()
+    
+    with tab5:
         render_data_cleaning()
     
     # Show loaded data preview
@@ -113,8 +123,8 @@ def render_file_upload():
 
 def render_templates():
     """Render template selection section."""
-    st.subheader("IT Support Templates")
-    st.markdown("Start with pre-built templates for common IT support scenarios.")
+    st.subheader("📋 Training Templates")
+    st.markdown("Start with pre-built templates for common training scenarios.")
     
     templates_dir = Path("./data/templates")
     
@@ -129,50 +139,70 @@ def render_templates():
         st.info("No template files found in `data/templates/`")
         return
     
-    # Display templates as cards
-    cols = st.columns(3)
-    
+    # Template categories for grouping
     template_info = {
-        # Original templates
-        "servicenow_ticket": ("🎫", "ServiceNow Tickets", "Ticket analysis and resolution"),
-        "knowledge_article": ("📚", "Knowledge Articles", "KB-based Q&A"),
-        "sop_format": ("📋", "SOPs & Procedures", "Step-by-step guides"),
-        # New Milestone 4 templates
-        "ticket_triage": ("🏷️", "Ticket Triage", "Priority & category assignment"),
-        "incident_postmortem": ("📊", "Incident Postmortems", "Root cause analysis reports"),
-        "change_request": ("🔄", "Change Requests", "Change management & approvals"),
-        "customer_communication": ("💬", "Customer Communication", "Service incident updates"),
-        "runbook": ("📖", "Runbooks", "Alert handling procedures"),
+        # IT Support templates
+        "servicenow_ticket": ("🎫", "ServiceNow Tickets", "Ticket analysis and resolution", "IT Support"),
+        "knowledge_article": ("📚", "Knowledge Articles", "KB-based Q&A", "IT Support"),
+        "sop_format": ("📋", "SOPs & Procedures", "Step-by-step guides", "IT Support"),
+        "ticket_triage": ("🏷️", "Ticket Triage", "Priority & category assignment", "IT Support"),
+        "incident_postmortem": ("📊", "Incident Postmortems", "Root cause analysis reports", "IT Support"),
+        "change_request": ("🔄", "Change Requests", "Change management & approvals", "IT Support"),
+        "customer_communication": ("💬", "Customer Communication", "Service incident updates", "IT Support"),
+        "runbook": ("📖", "Runbooks", "Alert handling procedures", "IT Support"),
+        # Book & PDF templates
+        "book_chapter_summary": ("📖", "Chapter Summaries", "Summarize book chapters concisely", "Books & PDFs"),
+        "book_qa": ("❓", "Book Q&A", "Question answering from book content", "Books & PDFs"),
+        "book_knowledge_extraction": ("🧠", "Knowledge Extraction", "Extract structured knowledge from books", "Books & PDFs"),
+        "pdf_text_cleaning": ("🧹", "PDF Text Cleaning", "Clean and format raw PDF text", "Books & PDFs"),
     }
     
-    for i, template_file in enumerate(template_files):
+    # Group templates by category
+    categorized = {}
+    for template_file in template_files:
         template_name = template_file.stem
-        icon, title, desc = template_info.get(
+        info = template_info.get(
             template_name, 
-            ("📄", template_name.replace("_", " ").title(), "Custom template")
+            ("📄", template_name.replace("_", " ").title(), "Custom template", "Other")
         )
+        if len(info) == 3:
+            icon, title, desc = info
+            category = "Other"
+        else:
+            icon, title, desc, category = info
         
-        with cols[i % 3]:
-            st.markdown(f"""
-            <div style="padding: 1rem; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 1rem;">
-                <h3>{icon} {title}</h3>
-                <p style="color: #666; font-size: 0.9rem;">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button(f"Load {title}", key=f"load_{template_name}"):
-                with st.spinner(f"Loading {title}..."):
-                    try:
-                        handler = DatasetHandler()
-                        samples = handler.load_file(template_file)
-                        
-                        st.session_state.training_samples = samples
-                        st.session_state.dataset_stats = handler.get_statistics(samples)
-                        st.success(f"✅ Loaded {len(samples)} samples from template!")
-                        st.rerun()
-                        
-                    except Exception as e:
-                        st.error(f"Failed to load template: {e}")
+        if category not in categorized:
+            categorized[category] = []
+        categorized[category].append((template_file, icon, title, desc))
+    
+    # Display templates grouped by category
+    for category, templates in categorized.items():
+        st.markdown(f"### {category}")
+        cols = st.columns(3)
+        
+        for i, (template_file, icon, title, desc) in enumerate(templates):
+            template_name = template_file.stem
+            with cols[i % 3]:
+                st.markdown(f"""
+                <div style="padding: 1rem; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 1rem;">
+                    <h4>{icon} {title}</h4>
+                    <p style="color: #666; font-size: 0.85rem; margin: 0.5rem 0;">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button(f"Load {title}", key=f"load_{template_name}", use_container_width=True):
+                    with st.spinner(f"Loading {title}..."):
+                        try:
+                            handler = DatasetHandler()
+                            samples = handler.load_file(template_file)
+                            
+                            st.session_state.training_samples = samples
+                            st.session_state.dataset_stats = handler.get_statistics(samples)
+                            st.success(f"✅ Loaded {len(samples)} samples from template!")
+                            st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"Failed to load template: {e}")
 
 
 def render_manual_entry():
@@ -243,25 +273,32 @@ def render_data_preview():
     samples = st.session_state.training_samples
     stats = st.session_state.dataset_stats
     
-    # Statistics cards
-    col1, col2, col3, col4 = st.columns(4)
+    # If stats is None, recalculate it
+    if stats is None and samples:
+        handler = DatasetHandler()
+        stats = handler.get_statistics(samples)
+        st.session_state.dataset_stats = stats
     
-    with col1:
-        st.metric("Total Samples", stats.total_samples)
-    
-    with col2:
-        st.metric("Training", stats.train_samples)
-    
-    with col3:
-        st.metric("Validation", stats.validation_samples)
-    
-    with col4:
-        st.metric("Avg Output Length", f"{stats.avg_output_length:.0f} words")
-    
-    # Warnings
-    if stats.warnings:
-        for warning in stats.warnings:
-            st.warning(f"⚠️ {warning}")
+    # Statistics cards (only show if stats available)
+    if stats:
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("Total Samples", stats.total_samples)
+        
+        with col2:
+            st.metric("Training", stats.train_samples)
+        
+        with col3:
+            st.metric("Validation", stats.validation_samples)
+        
+        with col4:
+            st.metric("Avg Output Length", f"{stats.avg_output_length:.0f} words")
+        
+        # Warnings
+        if stats.warnings:
+            for warning in stats.warnings:
+                st.warning(f"⚠️ {warning}")
     
     # Sample preview
     st.markdown("### Sample Preview")

@@ -12,6 +12,7 @@ A user-friendly platform for fine-tuning local LLMs on consumer hardware (8GB NV
 - **Simple CLI**: Command-line training without web UI dependencies
 - **Real-time Progress**: Training metrics and VRAM monitoring
 - **Modern UI**: Tailwind-inspired styling for a polished experience
+- **Contextual Help**: Hover over any control for detailed explanations
 
 ## Quick Start
 
@@ -197,8 +198,132 @@ Pre-built templates in `data/templates/`:
 - [x] Advanced data cleaning pipeline (v0.5.0)
 - [x] Offline model download support (v0.5.0)
 - [x] Tailwind-inspired UI styling (v0.5.0)
-- [ ] Model comparison dashboard (Milestone 5)
-- [ ] Hyperparameter optimization (Milestone 5)
+- [x] Model comparison dashboard (Milestone 5)
+- [x] Hyperparameter optimization (Milestone 5)
+- [x] Post-tuning test suite with ratings (Milestone 5)
+- [x] Contextual help system (v0.6.0)
+- [ ] Training resume & checkpoints (Milestone 6)
+- [ ] Multi-GPU support (Milestone 6)
+
+## Model Comparison Dashboard (v0.6.0)
+
+Compare multiple fine-tuned models side-by-side to find the best performer.
+
+**Features:**
+- **Training Metrics Comparison** - Compare final loss, training time, and configurations
+- **A/B Testing** - Test the same prompt across multiple models
+- **Response Quality Comparison** - Side-by-side response comparison with rating
+- **Model Rankings** - Automatic ranking based on performance scores
+- **Export Reports** - Generate comparison reports in JSON format
+
+**How to Use:**
+1. Train multiple models with different configurations
+2. Go to **Advanced Tools** → **Model Comparison**
+3. Select 2-4 adapters to compare
+4. View training metrics or run A/B tests
+5. Export comparison report
+
+## Hyperparameter Optimization (v0.6.0)
+
+Automatically find the best training configuration for your model and data.
+
+**Search Methods:**
+- **Quick Test** - 2 trials to verify setup (~10 minutes)
+- **Random Search** - Sample random configurations
+- **Smart Search** - Focus on promising regions (exploitation + exploration)
+- **Grid Search** - Exhaustive search (many trials)
+
+**Optimization Presets:**
+| Preset | Trials | Focus | Use Case |
+|--------|--------|-------|----------|
+| Quick Test | 2 | Validation | Verify HPO works |
+| Learning Rate Sweep | 6 | Learning rate | Find optimal LR |
+| LoRA Optimization | 12 | LoRA params | Optimize r, alpha, dropout |
+| Balanced | 10 | Key params | General optimization |
+| Full Optimization | 20 | All params | Comprehensive search |
+
+**Tunable Parameters:**
+- Learning rate: 1e-5 to 5e-4
+- LoRA rank (r): 4, 8, 16, 32, 64
+- LoRA alpha: 8, 16, 32, 64, 128
+- LoRA dropout: 0.0, 0.05, 0.1
+- Batch size: 1, 2, 4
+- Gradient accumulation: 4, 8, 16, 32
+- Max sequence length: 128, 256, 512, 1024
+- Warmup ratio: 0.0, 0.03, 0.1
+
+**How to Use:**
+1. Load training data and select a model
+2. Go to **Advanced Tools** → **HPO (Auto-Tune)**
+3. Choose a preset or customize the search space
+4. Start optimization and monitor progress
+5. Apply best configuration to training
+
+## Post-Tuning Test Suite (v0.6.0)
+
+Comprehensively evaluate your fine-tuned models with before/after comparison, rating systems, and effectiveness metrics.
+
+**Features:**
+- **Before/After Comparison** - Side-by-side responses from base model vs tuned model
+- **Test & Rate Interface** - Rate responses on multiple criteria (1-5 scale)
+- **Effectiveness Dashboard** - Visual metrics showing improvement by category
+- **Test History** - Track all test runs with persistent storage
+- **Export Results** - Generate detailed JSON reports
+
+**Rating Criteria:**
+| Criterion | Description |
+|-----------|-------------|
+| Relevance | How relevant is the response to the prompt? |
+| Accuracy | Is the information technically correct? |
+| Quality | Writing quality, clarity, and structure |
+| Helpfulness | Would this response help an IT professional? |
+| Overall | Overall impression of the response |
+
+**Built-in IT Support Test Cases:**
+- Ticket Summarization - VPN issues, server outages
+- Knowledge Article - Cloud migration, security policies  
+- Troubleshooting - Email sync, database slow queries
+- SOP Generation - Password reset procedures
+- Ticket Triage - Priority and category assignment
+- Communication - Customer service incident updates
+- Technical Analysis - System error log analysis
+
+**Effectiveness Metrics:**
+- **Average Improvement Score** - Mean rating increase from base to tuned
+- **Category Breakdown** - Performance by test category
+- **Response Quality Distribution** - Histogram of ratings
+- **Consistency Score** - Variance in response quality
+
+**How to Use:**
+1. Train a model and load the adapter
+2. Go to **Advanced Tools** → **Post-Tuning Tests**
+3. **Before/After Compare** - See side-by-side responses
+4. **Test & Rate** - Run test cases and rate responses
+5. **Effectiveness Dashboard** - View improvement metrics
+6. **Test History** - Review past evaluations
+
+## Contextual Help System (v0.6.0)
+
+The platform includes a subtle, non-intrusive help system that provides contextual information as you navigate.
+
+**How it Works:**
+- Hover over any control, label, or button to see an explanation
+- Help text appears in the footer at the bottom of the page
+- Includes the setting name, brief description, detailed explanation, and tips
+- Automatically detects common terms like "epochs", "learning rate", "LoRA rank", etc.
+
+**What's Explained:**
+- Training parameters (epochs, batch size, learning rate, sequence length)
+- LoRA settings (rank, alpha, dropout, target modules)
+- Presets and search methods
+- Evaluation metrics (loss, BLEU, ROUGE)
+- Navigation steps and advanced tools
+- IT support templates
+
+**Coverage:**
+- 50+ help entries covering all major features
+- Explanations tailored for users new to ML/fine-tuning
+- Practical tips and recommendations
 
 ## Advanced Data Cleaning (v0.5.0)
 

@@ -201,10 +201,10 @@ class Trainer:
         self.progress.status = "loading"
         self._notify_progress()
         
-        # 4-bit quantization config
+        # 4-bit quantization config - use float16 for compute to avoid bf16/amp issues
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
-            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_compute_dtype=torch.float16,  # Use fp16 for compatibility
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=True,
         )
@@ -308,8 +308,15 @@ class Trainer:
         self.progress.total_epochs = self.config.epochs
         self.progress.status = "training"
         
-        # Training arguments
-        training_args = TrainingArguments(
+        # Create SFTConfig for newer trl versions
+        from trl import SFTConfig
+        
+        # Disable mixed precision to avoid bf16/fp16 amp conflicts
+        # The model is already quantized to 4-bit, so we don't need additional precision reduction
+        # This fixes: "_amp_foreach_non_finite_check_and_unscale_cuda" not implemented for 'BFloat16'
+        
+        # Create trainer with SFTConfig (trl >= 0.12)
+        sft_config = SFTConfig(
             output_dir=str(full_output_dir),
             num_train_epochs=self.config.epochs,
             per_device_train_batch_size=self.config.batch_size,
@@ -318,7 +325,8 @@ class Trainer:
             learning_rate=self.config.learning_rate,
             warmup_ratio=self.config.warmup_ratio,
             weight_decay=self.config.weight_decay,
-            fp16=self.config.fp16,
+            fp16=False,  # Disable fp16 - causes issues with bf16 LoRA weights
+            bf16=False,  # Disable bf16 too
             optim=self.config.optim,
             logging_steps=self.config.logging_steps,
             save_steps=self.config.save_steps,
@@ -331,18 +339,17 @@ class Trainer:
             max_steps=self.config.max_steps if self.config.max_steps > 0 else -1,
             gradient_checkpointing=self.config.gradient_checkpointing,
             gradient_checkpointing_kwargs={"use_reentrant": False} if self.config.gradient_checkpointing else None,
+            max_length=self.config.max_seq_length,  # TRL 0.26+ uses max_length instead of max_seq_length
+            packing=False,
+            dataset_text_field="text",
         )
         
-        # Create trainer
         self.trainer = SFTTrainer(
             model=self.model,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            tokenizer=self.tokenizer,
-            args=training_args,
-            dataset_text_field="text",
-            max_seq_length=self.config.max_seq_length,
-            packing=False,  # Disable packing for simplicity
+            processing_class=self.tokenizer,
+            args=sft_config,
         )
         
         # Add our callback for progress tracking

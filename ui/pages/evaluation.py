@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 def render_evaluation():
     """Render the evaluation/testing page."""
     st.title("📊 Step 4: Evaluation & Testing")
-    st.markdown("Test your fine-tuned model with interactive chat or batch evaluation.")
     
     # Initialize session state for evaluation
     if "eval_model_loaded" not in st.session_state:
@@ -27,13 +26,31 @@ def render_evaluation():
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
     
-    # Sidebar for model loading
+    # =========================================================================
+    # PAGE INTRO
+    # =========================================================================
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d1b4e 100%); 
+                padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1rem;
+                border-left: 4px solid #60a5fa;">
+        <div style="color: #93c5fd; font-weight: 600; margin-bottom: 0.25rem;">🎯 What This Page Does</div>
+        <div style="color: #e0e0e0; font-size: 0.9rem;">
+            Test your fine-tuned model interactively or run batch evaluations to measure quality.
+            Compare responses, check metrics like BLEU/ROUGE, and validate your training worked.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # =========================================================================
+    # MODEL LOADER - Compact Card
+    # =========================================================================
     render_model_loader()
     
-    st.divider()
-    
-    # Main content with tabs
+    # =========================================================================
+    # MAIN CONTENT
+    # =========================================================================
     if st.session_state.eval_model_loaded:
+        st.markdown("---")
         tab1, tab2 = st.tabs(["💬 Interactive Chat", "📈 Batch Evaluation"])
         
         with tab1:
@@ -46,76 +63,103 @@ def render_evaluation():
 
 
 def render_model_loader():
-    """Render model loading controls in sidebar or main area."""
-    st.subheader("🔧 Model Configuration")
+    """Render compact model loading controls."""
     
-    col1, col2 = st.columns(2)
+    st.markdown("""
+    <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; 
+                padding: 0.75rem 1rem; margin-bottom: 1rem;">
+        <div style="color: #60a5fa; font-weight: 600; font-size: 1rem;">🔧 Model Configuration</div>
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col1:
+    # Use columns for compact layout
+    col_left, col_right = st.columns([1, 1], gap="medium")
+    
+    # Initialize variables
+    adapter_path = None
+    gguf_path = None
+    adapters = []
+    gguf_models = []
+    base_model = st.session_state.get("selected_model", "microsoft/phi-2")
+    
+    with col_left:
+        # Model source selection
         model_source = st.radio(
             "Model Source",
             ["Fine-tuned Adapter", "GGUF Model", "Base Model Only"],
-            help="Choose what to load for testing"
+            help="Choose what to load for testing",
+            horizontal=False
         )
-    
-    with col2:
+        
+        # Source-specific selection
         if model_source == "Fine-tuned Adapter":
-            # Show available adapters
             adapter_dir = Path("./models/adapters")
-            adapters = []
             if adapter_dir.exists():
-                adapters = [d.name for d in adapter_dir.iterdir() if d.is_dir() and (d / "adapter_config.json").exists()]
+                adapters = [d.name for d in adapter_dir.iterdir() 
+                           if d.is_dir() and (d / "adapter_config.json").exists()]
             
             if adapters:
                 selected_adapter = st.selectbox(
-                    "Select Adapter",
+                    "Trained Adapter",
                     adapters,
-                    help="Choose a trained adapter to test"
+                    help="Select from your trained adapters"
                 )
                 adapter_path = str(adapter_dir / selected_adapter)
             else:
-                st.warning("No trained adapters found. Train a model first!")
-                adapter_path = None
+                st.warning("⚠️ No trained adapters found")
                 
         elif model_source == "GGUF Model":
-            # Show GGUF files
             from core.model_loader import ModelLoader
             loader = ModelLoader()
-            gguf_models = loader.scan_local_models()
+            gguf_models = loader.scan_models()
             
             if gguf_models:
-                gguf_names = [m["name"] for m in gguf_models]
-                selected_gguf = st.selectbox(
-                    "Select GGUF Model",
-                    gguf_names
-                )
-                gguf_path = next(m["path"] for m in gguf_models if m["name"] == selected_gguf)
+                gguf_names = [m.name for m in gguf_models]
+                selected_gguf = st.selectbox("GGUF Model", gguf_names)
+                gguf_path = next(str(m.path) for m in gguf_models if m.name == selected_gguf)
             else:
-                st.warning("No GGUF models found in models/base/")
-                gguf_path = None
+                st.warning("⚠️ No GGUF models found")
     
-    # Base model selection (for adapters)
-    if model_source in ["Fine-tuned Adapter", "Base Model Only"]:
-        base_model = st.text_input(
-            "Base Model",
-            value=st.session_state.get("selected_model", "microsoft/phi-2"),
-            help="HuggingFace model ID"
-        )
-    
-    # Load button
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col2:
+    with col_right:
+        # Base model input (for HF models)
+        if model_source in ["Fine-tuned Adapter", "Base Model Only"]:
+            base_model = st.text_input(
+                "Base Model ID",
+                value=base_model,
+                help="HuggingFace model ID (e.g., microsoft/phi-2)"
+            )
+        
+        st.markdown("<div style='height: 0.5rem'></div>", unsafe_allow_html=True)
+        
+        # Load/Unload button
         if st.session_state.eval_model_loaded:
+            # Show current model info
+            if st.session_state.eval_engine:
+                info = st.session_state.eval_engine.get_model_info()
+                st.success(f"✅ **Loaded:** {info.get('model_path', 'N/A')}")
+            
             if st.button("🔄 Unload Model", type="secondary", use_container_width=True):
                 unload_model()
                 st.rerun()
         else:
+            # Determine if we can load
             load_disabled = False
-            if model_source == "Fine-tuned Adapter" and not adapters:
-                load_disabled = True
-            elif model_source == "GGUF Model" and not gguf_models:
-                load_disabled = True
+            load_reason = ""
+            
+            if model_source == "Fine-tuned Adapter":
+                if not adapters:
+                    load_disabled = True
+                    load_reason = "Train a model first"
+                elif not adapter_path:
+                    load_disabled = True
+                    load_reason = "Select an adapter"
+            elif model_source == "GGUF Model":
+                if not gguf_models:
+                    load_disabled = True
+                    load_reason = "No GGUF models found"
+            
+            if load_disabled:
+                st.caption(f"💡 {load_reason}")
             
             if st.button("📥 Load Model", type="primary", use_container_width=True, disabled=load_disabled):
                 with st.spinner("Loading model... This may take a few minutes."):
@@ -128,15 +172,9 @@ def render_model_loader():
                             load_hf_base(base_model)
                         
                         st.session_state.eval_model_loaded = True
-                        st.success("✅ Model loaded successfully!")
                         st.rerun()
                     except Exception as e:
                         st.error(f"Failed to load model: {e}")
-    
-    # Show model info if loaded
-    if st.session_state.eval_model_loaded and st.session_state.eval_engine:
-        info = st.session_state.eval_engine.get_model_info()
-        st.info(f"**Loaded:** {info.get('type', 'unknown')} | {info.get('model_path', 'N/A')}")
 
 
 def load_hf_with_adapter(base_model: str, adapter_path: str):
@@ -202,281 +240,351 @@ def unload_model():
 
 def render_no_model_state():
     """Render state when no model is loaded."""
-    st.info("👆 Load a model above to start testing")
     
-    col1, col2 = st.columns(2)
+    st.markdown("---")
+    
+    # Helpful guidance
+    col1, col2 = st.columns(2, gap="medium")
     
     with col1:
         st.markdown("""
-        ### 🎯 What you can test:
-        - **Chat responses** - Interactive conversation
-        - **IT Support tasks** - Ticket summarization, KB generation
-        - **Custom prompts** - Any task you trained for
-        """)
+        <div style="background: #1a2332; border: 1px solid #2d4a6f; border-radius: 8px; padding: 1rem;">
+            <div style="color: #60a5fa; font-weight: 600; margin-bottom: 0.5rem;">🎯 What You Can Test</div>
+            <ul style="color: #b0b0b0; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                <li><strong>Chat responses</strong> — Interactive conversation</li>
+                <li><strong>IT Support tasks</strong> — Ticket summaries, KB articles</li>
+                <li><strong>Custom prompts</strong> — Any task you trained for</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("""
-        ### 💡 Testing Tips:
-        - Compare fine-tuned vs base model
-        - Test with similar data to training
-        - Try edge cases and variations
-        """)
+        <div style="background: #2a2215; border: 1px solid #5c4a1f; border-radius: 8px; padding: 1rem;">
+            <div style="color: #fbbf24; font-weight: 600; margin-bottom: 0.5rem;">💡 Testing Tips</div>
+            <ul style="color: #b0b0b0; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                <li>Compare fine-tuned vs base model</li>
+                <li>Test with similar data to training</li>
+                <li>Try edge cases and variations</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
     
-    # Quick navigation
-    st.divider()
+    st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
     
-    if not st.session_state.trained_adapter_path:
-        st.warning("No trained adapter found. Complete training first!")
-        if st.button("← Go to Training", use_container_width=True):
-            st.session_state.current_step = 3
-            st.rerun()
+    # Quick navigation if no adapter
+    if not st.session_state.get("trained_adapter_path"):
+        st.info("👆 **Load a model above to start testing.** Select an adapter from your training runs, a GGUF model, or test the base model.")
 
 
 def render_chat_interface():
     """Render the chat interface for model testing."""
-    st.subheader("💬 Chat Interface")
     
-    # Generation settings
-    with st.expander("⚙️ Generation Settings", expanded=False):
-        col1, col2, col3, col4 = st.columns(4)
+    # Two-column layout: settings on left, chat on right
+    settings_col, chat_col = st.columns([1, 2], gap="medium")
+    
+    with settings_col:
+        # Generation settings card
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">⚙️ Generation Settings</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        with col1:
-            temperature = st.slider("Temperature", 0.0, 2.0, 0.7, 0.1,
-                help="Higher = more creative, Lower = more focused")
-        with col2:
-            max_tokens = st.slider("Max Tokens", 32, 1024, 256, 32,
-                help="Maximum response length")
-        with col3:
-            top_p = st.slider("Top P", 0.1, 1.0, 0.9, 0.1,
-                help="Nucleus sampling threshold")
-        with col4:
-            top_k = st.slider("Top K", 1, 100, 50, 1,
-                help="Top-k sampling")
-    
-    # System prompt
-    system_prompt = st.text_area(
-        "System Prompt (optional)",
-        value="You are a helpful IT support assistant. Provide clear, concise answers.",
-        height=80,
-        help="Set the assistant's behavior"
-    )
-    
-    st.divider()
-    
-    # Chat display
-    chat_container = st.container()
-    
-    with chat_container:
-        # Display chat history
-        for message in st.session_state.chat_history:
-            role = message["role"]
-            content = message["content"]
-            
-            if role == "user":
-                st.chat_message("user").write(content)
-            else:
-                st.chat_message("assistant").write(content)
-    
-    # Chat input
-    user_input = st.chat_input("Type your message...")
-    
-    if user_input:
-        # Add user message
-        st.session_state.chat_history.append({
-            "role": "user",
-            "content": user_input
-        })
+        temperature = st.slider(
+            "Temperature",
+            0.0, 2.0, 0.7, 0.1,
+            help="Higher = more creative, Lower = more focused"
+        )
         
-        # Generate response
-        with st.spinner("Generating response..."):
-            try:
-                engine = st.session_state.eval_engine
-                
-                response = engine.chat(
-                    messages=st.session_state.chat_history,
-                    system_prompt=system_prompt,
-                    max_new_tokens=max_tokens,
-                    temperature=temperature,
-                )
-                
-                # Add assistant response
-                st.session_state.chat_history.append({
-                    "role": "assistant",
-                    "content": response
-                })
-                
-            except Exception as e:
-                st.error(f"Generation failed: {e}")
-                # Remove the user message if generation failed
-                st.session_state.chat_history.pop()
+        max_tokens = st.slider(
+            "Max Tokens",
+            32, 1024, 256, 32,
+            help="Maximum response length"
+        )
         
-        st.rerun()
-    
-    # Chat controls
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
-    with col1:
-        if st.button("🗑️ Clear Chat", use_container_width=True):
-            st.session_state.chat_history = []
-            st.rerun()
-    
-    with col3:
-        if st.button("📋 Copy Last Response", use_container_width=True):
-            if st.session_state.chat_history:
-                last_assistant = next(
-                    (m["content"] for m in reversed(st.session_state.chat_history) 
-                     if m["role"] == "assistant"),
-                    None
-                )
-                if last_assistant:
-                    st.code(last_assistant, language=None)
-    
-    st.divider()
-    
-    # Quick test prompts
-    render_quick_prompts()
-
-
-def render_quick_prompts():
-    """Render quick test prompts for IT support tasks."""
-    st.subheader("🚀 Quick Test Prompts")
-    
-    prompts = {
-        "Ticket Summary": "Summarize this ticket: User reports VPN connection drops every 10 minutes. They're using Windows 11 and Cisco AnyConnect. Issue started after recent Windows update. User is remote worker and needs VPN for all work tasks.",
-        "KB Article": "Write a knowledge article for: How to reset MFA (Multi-Factor Authentication) when user gets a new phone.",
-        "Troubleshooting": "What are the troubleshooting steps for: Outlook keeps asking for password repeatedly?",
-        "SOP Generation": "Create an SOP for: Onboarding a new employee's IT equipment and accounts.",
-    }
-    
-    cols = st.columns(len(prompts))
-    
-    for col, (name, prompt) in zip(cols, prompts.items()):
-        with col:
+        with st.expander("Advanced", expanded=False):
+            top_p = st.slider("Top P", 0.1, 1.0, 0.9, 0.1, help="Nucleus sampling")
+            top_k = st.slider("Top K", 1, 100, 50, 1, help="Top-k sampling")
+        
+        st.markdown("<div style='height: 0.5rem'></div>", unsafe_allow_html=True)
+        
+        # System prompt
+        system_prompt = st.text_area(
+            "System Prompt",
+            value="You are a helpful IT support assistant. Provide clear, concise answers.",
+            height=100,
+            help="Set the assistant's behavior"
+        )
+        
+        st.markdown("<div style='height: 0.5rem'></div>", unsafe_allow_html=True)
+        
+        # Quick test prompts in a compact card
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem;">
+            <div style="color: #f59e0b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">🚀 Quick Tests</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        quick_prompts = {
+            "📋 Ticket Summary": "Summarize this ticket: User reports VPN connection drops every 10 minutes. Using Windows 11 with Cisco AnyConnect. Started after recent Windows update. Remote worker needs VPN for all tasks.",
+            "📚 KB Article": "Write a knowledge article for: How to reset MFA when user gets a new phone.",
+            "🔧 Troubleshoot": "Troubleshooting steps for: Outlook keeps asking for password repeatedly?",
+            "📝 SOP": "Create an SOP for: Onboarding a new employee's IT equipment and accounts.",
+        }
+        
+        for name, prompt in quick_prompts.items():
             if st.button(name, use_container_width=True, key=f"quick_{name}"):
-                st.session_state.chat_history.append({
-                    "role": "user", 
-                    "content": prompt
-                })
-                
+                st.session_state.chat_history.append({"role": "user", "content": prompt})
                 with st.spinner("Generating..."):
                     try:
                         engine = st.session_state.eval_engine
                         response = engine.chat(
                             messages=st.session_state.chat_history,
+                            system_prompt=system_prompt,
                             max_new_tokens=512,
                             temperature=0.7,
                         )
-                        st.session_state.chat_history.append({
-                            "role": "assistant",
-                            "content": response
-                        })
+                        st.session_state.chat_history.append({"role": "assistant", "content": response})
                     except Exception as e:
                         st.error(f"Error: {e}")
                         st.session_state.chat_history.pop()
-                
                 st.rerun()
+    
+    with chat_col:
+        # Chat container
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">💬 Chat</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Chat display area
+        chat_container = st.container(height=400)
+        
+        with chat_container:
+            if not st.session_state.chat_history:
+                st.markdown("""
+                <div style="color: #6b7280; text-align: center; padding: 2rem; font-style: italic;">
+                    Type a message below or use a quick test prompt ←
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                for message in st.session_state.chat_history:
+                    role = message["role"]
+                    content = message["content"]
+                    st.chat_message(role).write(content)
+        
+        # Chat input
+        user_input = st.chat_input("Type your message...")
+        
+        if user_input:
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            
+            with st.spinner("Generating response..."):
+                try:
+                    engine = st.session_state.eval_engine
+                    response = engine.chat(
+                        messages=st.session_state.chat_history,
+                        system_prompt=system_prompt,
+                        max_new_tokens=max_tokens,
+                        temperature=temperature,
+                    )
+                    st.session_state.chat_history.append({"role": "assistant", "content": response})
+                except Exception as e:
+                    st.error(f"Generation failed: {e}")
+                    st.session_state.chat_history.pop()
+            
+            st.rerun()
+        
+        # Chat controls
+        ctrl_col1, ctrl_col2 = st.columns(2)
+        
+        with ctrl_col1:
+            if st.button("🗑️ Clear Chat", use_container_width=True):
+                st.session_state.chat_history = []
+                st.rerun()
+        
+        with ctrl_col2:
+            if st.button("📋 Copy Last Response", use_container_width=True):
+                if st.session_state.chat_history:
+                    last_assistant = next(
+                        (m["content"] for m in reversed(st.session_state.chat_history) if m["role"] == "assistant"),
+                        None
+                    )
+                    if last_assistant:
+                        st.code(last_assistant, language=None)
 
 
 def render_batch_evaluation():
     """Render batch evaluation interface with metrics."""
-    st.subheader("📈 Batch Evaluation")
-    st.markdown("Run automated evaluation on test datasets with BLEU, ROUGE, and word overlap metrics.")
     
-    # Test data source
-    test_source = st.radio(
-        "Test Data Source",
-        ["Use Loaded Training Data", "Upload Test Dataset", "Use Template Samples"],
-        horizontal=True
-    )
+    # Two-column layout
+    config_col, results_col = st.columns([1, 2], gap="medium")
     
-    test_samples = []
-    
-    if test_source == "Use Loaded Training Data":
-        if st.session_state.training_samples:
-            st.info(f"📄 {len(st.session_state.training_samples)} samples available from current dataset")
-            
-            # Sample size selection
-            max_samples = len(st.session_state.training_samples)
-            num_samples = st.slider("Number of samples to evaluate", 1, min(max_samples, 50), min(10, max_samples))
-            
-            test_samples = st.session_state.training_samples[:num_samples]
-        else:
-            st.warning("No training data loaded. Go to Step 1 to load data.")
-            
-    elif test_source == "Upload Test Dataset":
-        uploaded_file = st.file_uploader("Upload test dataset (JSON/JSONL)", type=["json", "jsonl"])
+    with config_col:
+        # Test Data Source card
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">📁 Test Data Source</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        if uploaded_file:
-            try:
-                from core.dataset_handler import DatasetHandler
-                import tempfile
-                
-                # Save to temp file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp:
-                    tmp.write(uploaded_file.getvalue())
-                    tmp_path = tmp.name
-                
-                handler = DatasetHandler()
-                test_samples = handler.load_file(Path(tmp_path))
-                st.success(f"Loaded {len(test_samples)} test samples")
-            except Exception as e:
-                st.error(f"Failed to load test file: {e}")
-                
-    elif test_source == "Use Template Samples":
-        templates_dir = Path("./data/templates")
+        test_source = st.radio(
+            "Source",
+            ["Training Data", "Upload File", "Templates"],
+            label_visibility="collapsed",
+            horizontal=False
+        )
         
-        if templates_dir.exists():
-            template_files = list(templates_dir.glob("*.json"))
+        test_samples = []
+        
+        if test_source == "Training Data":
+            if st.session_state.get("training_samples"):
+                samples = st.session_state.training_samples
+                st.success(f"✅ {len(samples)} samples available")
+                
+                max_samples = min(len(samples), 50)
+                num_samples = st.slider("Samples to evaluate", 1, max_samples, min(10, max_samples))
+                test_samples = samples[:num_samples]
+            else:
+                st.warning("No training data loaded")
+                st.caption("Go to Step 1 to load data")
+                
+        elif test_source == "Upload File":
+            uploaded_file = st.file_uploader(
+                "Test dataset",
+                type=["json", "jsonl"],
+                label_visibility="collapsed"
+            )
             
-            if template_files:
-                selected_template = st.selectbox(
-                    "Select template",
-                    [f.stem for f in template_files],
-                    format_func=lambda x: x.replace("_", " ").title()
-                )
-                
-                template_path = templates_dir / f"{selected_template}.json"
-                
+            if uploaded_file:
                 try:
                     from core.dataset_handler import DatasetHandler
+                    import tempfile
+                    
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp:
+                        tmp.write(uploaded_file.getvalue())
+                        tmp_path = tmp.name
+                    
                     handler = DatasetHandler()
-                    test_samples = handler.load_file(template_path)
-                    st.info(f"📄 {len(test_samples)} samples from {selected_template}")
+                    test_samples = handler.load_file(Path(tmp_path))
+                    st.success(f"✅ {len(test_samples)} samples loaded")
                 except Exception as e:
-                    st.error(f"Failed to load template: {e}")
-            else:
-                st.warning("No template files found")
+                    st.error(f"Failed: {e}")
+                    
+        elif test_source == "Templates":
+            templates_dir = Path("./data/templates")
+            
+            if templates_dir.exists():
+                template_files = list(templates_dir.glob("*.json"))
+                
+                if template_files:
+                    selected_template = st.selectbox(
+                        "Template",
+                        [f.stem for f in template_files],
+                        format_func=lambda x: x.replace("_", " ").title(),
+                        label_visibility="collapsed"
+                    )
+                    
+                    try:
+                        from core.dataset_handler import DatasetHandler
+                        handler = DatasetHandler()
+                        test_samples = handler.load_file(templates_dir / f"{selected_template}.json")
+                        st.info(f"📄 {len(test_samples)} samples")
+                    except Exception as e:
+                        st.error(f"Failed: {e}")
+        
+        st.markdown("<div style='height: 0.75rem'></div>", unsafe_allow_html=True)
+        
+        # Evaluation Settings card
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">⚙️ Evaluation Settings</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        max_tokens = st.slider("Max Tokens", 64, 512, 256, 32, key="batch_max_tokens")
+        temperature = st.slider("Temperature", 0.0, 1.5, 0.3, 0.1, key="batch_temp",
+            help="Lower = more deterministic")
+        
+        st.markdown("<div style='height: 0.5rem'></div>", unsafe_allow_html=True)
+        
+        # Metrics selection
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">📊 Metrics</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        calc_bleu = st.checkbox("BLEU Score", value=True, help="Translation quality metric")
+        calc_rouge = st.checkbox("ROUGE Score", value=True, help="Summary quality metric")
+        calc_word_overlap = st.checkbox("Word Overlap", value=True, help="Simple overlap measure")
+        
+        st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
+        
+        # Run button
+        if test_samples:
+            if st.button("🚀 Run Evaluation", type="primary", use_container_width=True):
+                run_batch_evaluation(
+                    test_samples,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    metrics={"bleu": calc_bleu, "rouge": calc_rouge, "word_overlap": calc_word_overlap}
+                )
         else:
-            st.warning("Templates directory not found")
+            st.button("🚀 Run Evaluation", type="primary", use_container_width=True, disabled=True)
+            st.caption("Select test data to enable")
     
-    st.divider()
-    
-    # Evaluation settings
-    with st.expander("⚙️ Evaluation Settings", expanded=False):
-        col1, col2 = st.columns(2)
+    with results_col:
+        # Results area
+        st.markdown("""
+        <div style="background: #1a1d24; border: 1px solid #3d4251; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.75rem;">
+            <div style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">📈 Results</div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        with col1:
-            max_tokens = st.slider("Max Generation Tokens", 64, 512, 256, 32, key="batch_max_tokens")
-            temperature = st.slider("Temperature", 0.0, 1.5, 0.3, 0.1, key="batch_temp",
-                help="Lower temperature for more deterministic outputs")
-        
-        with col2:
-            # Metrics to calculate
-            calc_bleu = st.checkbox("Calculate BLEU Score", value=True)
-            calc_rouge = st.checkbox("Calculate ROUGE Score", value=True)
-            calc_word_overlap = st.checkbox("Calculate Word Overlap", value=True)
+        # Show previous results if available
+        if st.session_state.get("batch_eval_results"):
+            display_batch_results(st.session_state.batch_eval_results)
+        else:
+            st.markdown("""
+            <div style="color: #6b7280; text-align: center; padding: 3rem; font-style: italic;">
+                Results will appear here after running evaluation
+            </div>
+            """, unsafe_allow_html=True)
+
+
+def display_batch_results(results):
+    """Display batch evaluation results."""
+    import pandas as pd
     
-    # Run evaluation button
-    if test_samples:
-        if st.button("🚀 Run Batch Evaluation", type="primary", use_container_width=True):
-            run_batch_evaluation(
-                test_samples,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                metrics={"bleu": calc_bleu, "rouge": calc_rouge, "word_overlap": calc_word_overlap}
-            )
-    else:
-        st.info("Select a test data source above to enable evaluation")
+    # Summary metrics
+    metric_names = [k for k in results[0].keys() if k not in ["Instruction", "Reference", "Generated"]]
+    
+    if metric_names:
+        cols = st.columns(len(metric_names))
+        for i, metric_name in enumerate(metric_names):
+            values = [r[metric_name] for r in results if isinstance(r.get(metric_name), (int, float))]
+            if values:
+                avg_value = sum(values) / len(values)
+                with cols[i]:
+                    st.metric(f"Avg {metric_name}", f"{avg_value:.3f}")
+    
+    st.markdown("<div style='height: 0.5rem'></div>", unsafe_allow_html=True)
+    
+    # Results table
+    df = pd.DataFrame(results)
+    st.dataframe(df, use_container_width=True, hide_index=True, height=300)
+    
+    # Export buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        csv_data = df.to_csv(index=False)
+        st.download_button("📥 CSV", csv_data, "eval_results.csv", "text/csv", use_container_width=True)
+    with col2:
+        json_data = df.to_json(orient="records", indent=2)
+        st.download_button("📥 JSON", json_data, "eval_results.json", "application/json", use_container_width=True)
 
 
 def run_batch_evaluation(test_samples, max_tokens: int, temperature: float, metrics: dict):
@@ -539,51 +647,10 @@ def run_batch_evaluation(test_samples, max_tokens: int, temperature: float, metr
         progress_bar.empty()
         status_text.empty()
         
-        # Display results
-        st.success(f"✅ Evaluated {total} samples!")
-        
-        # Summary metrics
-        st.subheader("📊 Summary Metrics")
-        
-        metric_cols = st.columns(4)
-        metric_names = [k for k in results[0].keys() if k not in ["Instruction", "Reference", "Generated"]]
-        
-        for i, metric_name in enumerate(metric_names):
-            values = [r[metric_name] for r in results if isinstance(r.get(metric_name), (int, float))]
-            if values:
-                avg_value = sum(values) / len(values)
-                with metric_cols[i % 4]:
-                    st.metric(f"Avg {metric_name}", f"{avg_value:.3f}")
-        
-        # Detailed results table
-        st.subheader("📋 Detailed Results")
-        df = pd.DataFrame(results)
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        
-        # Export results
-        col1, col2 = st.columns(2)
-        with col1:
-            csv_data = df.to_csv(index=False)
-            st.download_button(
-                "📥 Download Results (CSV)",
-                csv_data,
-                "evaluation_results.csv",
-                "text/csv",
-                use_container_width=True
-            )
-        
-        with col2:
-            json_data = df.to_json(orient="records", indent=2)
-            st.download_button(
-                "📥 Download Results (JSON)",
-                json_data,
-                "evaluation_results.json",
-                "application/json",
-                use_container_width=True
-            )
-            
-        # Store results in session state
+        # Store and display results
         st.session_state.batch_eval_results = results
+        st.success(f"✅ Evaluated {total} samples!")
+        st.rerun()
         
     except ImportError as e:
         st.error(f"Missing evaluation dependencies: {e}")

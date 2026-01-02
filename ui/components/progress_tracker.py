@@ -47,10 +47,13 @@ def render_progress_header(progress: Dict[str, Any]):
     """Render the progress header with key metrics."""
     col1, col2, col3, col4, col5 = st.columns(5)
     
+    # Cap progress at 100% for display
+    progress_pct = min(100.0, progress.get('progress_percent', 0))
+    
     with col1:
         st.metric(
             "Progress",
-            f"{progress.get('progress_percent', 0):.1f}%",
+            f"{progress_pct:.1f}%",
             delta=None
         )
     
@@ -84,6 +87,8 @@ def render_progress_header(progress: Dict[str, Any]):
 def render_progress_bar(progress: Dict[str, Any]):
     """Render the main progress bar."""
     pct = progress.get('progress_percent', 0) / 100
+    # Clamp to valid range [0.0, 1.0] for Streamlit progress bar
+    pct = max(0.0, min(1.0, pct))
     
     st.progress(pct)
     
