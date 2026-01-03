@@ -1,12 +1,18 @@
 # Local LLM Fine-Tuning Platform
 
-A user-friendly platform for fine-tuning local LLMs on consumer hardware (8GB NVIDIA GPU) using QLoRA. Designed for IT automation and ServiceNow training data.
+![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
+![Python](https://img.shields.io/badge/python-3.10+-green.svg)
+![License](https://img.shields.io/badge/license-MIT-orange.svg)
+
+A user-friendly platform for fine-tuning local LLMs on consumer hardware (8GB NVIDIA GPU) using QLoRA. Designed for IT automation, ServiceNow training data, and knowledge extraction from books/PDFs.
 
 ## Features
 
 - **Memory Efficient**: QLoRA training fits 7B-13B models in 8GB VRAM
 - **Multiple Data Formats**: JSON, JSONL, CSV, TXT, PDF, HTML (Confluence)
 - **IT Support Templates**: Pre-built formats for ServiceNow tickets, SOPs, Knowledge Articles
+- **Book & PDF Templates**: Chapter summaries, Q&A, knowledge extraction, text cleaning
+- **HuggingFace Hub Integration**: Browse and load 25+ curated datasets directly
 - **Advanced Data Cleaning**: Delimiter removal, pattern matching, deduplication, quality filters
 - **Offline Model Support**: Download models at home, use at work without internet
 - **Simple CLI**: Command-line training without web UI dependencies
@@ -175,9 +181,11 @@ The UI provides a guided 5-step workflow:
 4. **Evaluation** - Interactive chat testing + batch evaluation with BLEU/ROUGE metrics
 5. **Export** - Merge LoRA adapters, export guidance, HuggingFace Hub upload
 
-## IT Support Templates (Milestone 4)
+## Training Templates
 
-Pre-built templates in `data/templates/`:
+Pre-built templates in `data/templates/` organized by category:
+
+### IT Support Templates
 - **ServiceNow Tickets** - Ticket analysis and resolution
 - **Knowledge Articles** - KB-based Q&A format
 - **SOPs & Procedures** - Step-by-step guides
@@ -186,6 +194,43 @@ Pre-built templates in `data/templates/`:
 - **Change Requests** - Change management & approvals
 - **Customer Communication** - Service incident updates
 - **Runbooks** - Alert handling procedures
+
+### Book & PDF Templates (v0.7.0)
+- **Chapter Summaries** - Summarize book chapters concisely
+- **Book Q&A** - Question answering from book content
+- **Knowledge Extraction** - Extract structured knowledge from books
+- **PDF Text Cleaning** - Clean and format raw PDF text
+
+## HuggingFace Datasets Browser (v0.7.0)
+
+Browse and load training datasets directly from HuggingFace Hub without leaving the app.
+
+**Features:**
+- **8 Curated Categories** - Instruction Following, Code, Q&A, Summarization, Classification, Reasoning, Books, Domain-Specific
+- **25+ Popular Datasets** - Dolly, Alpaca, OpenAssistant, CodeAlpaca, SQuAD, and more
+- **Dataset Details** - Size, license, description, and use cases for each dataset
+- **Field Mapping** - Automatic detection and mapping of dataset fields to training format
+- **Custom Datasets** - Load any HuggingFace dataset by ID
+- **Seamless Integration** - Loaded data converts to your training format automatically
+
+**Curated Dataset Categories:**
+| Category | Examples |
+|----------|----------|
+| Instruction Following | Dolly 15k, Alpaca, OpenAssistant, UltraChat |
+| Code & Programming | CodeAlpaca, CodeSearchNet, Python Alpaca |
+| Question Answering | SQuAD, Natural Questions, TriviaQA |
+| Summarization | CNN/DailyMail, XSum, SAMSum |
+| Text Classification | IMDb, SST-2, AG News |
+| Reasoning & Math | GSM8K, MATH, ARC, HellaSwag |
+| Books & Literature | BookCorpus, Gutenberg, PG-19 |
+| Domain-Specific | Medical QA, Legal QA, Finance Alpaca |
+
+**How to Use:**
+1. Go to **Data Preparation** → **🤗 HuggingFace** tab
+2. Browse categories or enter a custom dataset ID
+3. Select dataset and configure field mapping
+4. Click **Load Dataset** to import samples
+5. Data is automatically converted to instruction/input/output format
 
 ## Roadmap
 
@@ -202,6 +247,9 @@ Pre-built templates in `data/templates/`:
 - [x] Hyperparameter optimization (Milestone 5)
 - [x] Post-tuning test suite with ratings (Milestone 5)
 - [x] Contextual help system (v0.6.0)
+- [x] HuggingFace datasets browser (v0.7.0)
+- [x] Book & PDF templates (v0.7.0)
+- [x] Template categorization (v0.7.0)
 - [ ] Training resume & checkpoints (Milestone 6)
 - [ ] Multi-GPU support (Milestone 6)
 

@@ -1,5 +1,6 @@
 # Local LLM Fine-Tuning Platform Configuration
 # =============================================
+# Version: 0.7.0
 
 # Paths Configuration
 paths:
