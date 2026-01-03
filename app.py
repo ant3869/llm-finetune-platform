@@ -65,7 +65,7 @@ def render_sidebar():
     with st.sidebar:
         st.image("https://img.icons8.com/fluency/96/artificial-intelligence.png", width=80)
         st.title("LLM Fine-Tuning")
-        st.caption("v0.6.0 - Model Comparison & HPO")
+        st.caption("v0.7.0 - HuggingFace Datasets & Book Templates")
         
         st.divider()
         
@@ -143,10 +143,11 @@ def render_sidebar():
         
         st.divider()
         
-        # GPU Status
-        st.subheader("💾 GPU Status")
+        # Hardware Status
+        st.subheader("💾 Hardware Status")
         try:
             import torch
+            import psutil
             cuda_available = torch.cuda.is_available()
             
             if cuda_available:
@@ -156,24 +157,46 @@ def render_sidebar():
                     total_mem = torch.cuda.get_device_properties(0).total_memory / (1024**3)
                     used_mem = torch.cuda.memory_allocated(0) / (1024**3)
                     
-                    st.caption(f"**{gpu_name}**")
+                    st.caption(f"🎮 **GPU: {gpu_name}**")
                     st.progress(used_mem / total_mem if total_mem > 0 else 0)
-                    st.caption(f"{used_mem:.1f} / {total_mem:.1f} GB")
+                    st.caption(f"VRAM: {used_mem:.1f} / {total_mem:.1f} GB")
                 else:
                     st.warning("CUDA available but no devices")
             else:
-                st.warning("No CUDA GPU detected")
-                st.caption("Check PyTorch CUDA install")
-                # Show diagnostic info
-                with st.expander("Diagnostics"):
-                    st.code(f"torch.cuda.is_available(): {cuda_available}")
-                    st.code(f"torch version: {torch.__version__}")
-                    if hasattr(torch.version, 'cuda'):
-                        st.code(f"CUDA version: {torch.version.cuda}")
-        except ImportError:
-            st.info("PyTorch not installed")
+                # Show CPU information instead
+                st.info("🖥️ CPU Mode (No GPU)")
+                
+                # CPU info
+                cpu_count = psutil.cpu_count(logical=True)
+                cpu_percent = psutil.cpu_percent(interval=0.1)
+                
+                # RAM info
+                ram = psutil.virtual_memory()
+                ram_total = ram.total / (1024**3)
+                ram_used = ram.used / (1024**3)
+                ram_percent = ram.percent
+                
+                st.caption(f"**CPU:** {cpu_count} cores @ {cpu_percent:.0f}%")
+                st.progress(ram_percent / 100)
+                st.caption(f"RAM: {ram_used:.1f} / {ram_total:.1f} GB")
+                
+                with st.expander("ℹ️ CPU Training Info"):
+                    st.markdown("""
+                    Training on CPU is **much slower** than GPU but works fine.
+                    
+                    **Tips for CPU training:**
+                    - Use smaller models (Phi-2, TinyLlama)
+                    - Reduce sequence length (256-512)
+                    - Use Quick Test preset first
+                    - Be patient - expect 5-10x longer training
+                    """)
+        except ImportError as e:
+            if 'psutil' in str(e):
+                st.info("Install psutil for CPU metrics: pip install psutil")
+            else:
+                st.info("PyTorch not installed")
         except Exception as e:
-            st.error(f"GPU check failed: {e}")
+            st.error(f"Hardware check failed: {e}")
 
 
 def render_main_content():

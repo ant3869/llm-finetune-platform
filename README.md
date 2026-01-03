@@ -1,5 +1,9 @@
 # Local LLM Fine-Tuning Platform
 
+<p align="center">
+  <img src="assets/banner.png" alt="LLM Fine-Tuning Platform" width="400">
+</p>
+
 ![Version](https://img.shields.io/badge/version-0.7.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-green.svg)
 ![License](https://img.shields.io/badge/license-MIT-orange.svg)

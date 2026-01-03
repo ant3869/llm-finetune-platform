@@ -120,6 +120,7 @@ def render_setup_summary():
         st.markdown("**💻 Hardware**")
         try:
             import torch
+            import psutil
             if torch.cuda.is_available():
                 gpu = torch.cuda.get_device_name(0)
                 vram = torch.cuda.get_device_properties(0).total_memory / (1024**3)
@@ -129,16 +130,24 @@ def render_setup_summary():
                 - **Status:** ✅ Ready
                 """)
             else:
-                st.markdown("""
-                - **GPU:** Not available
-                - **Status:** ⚠️ CPU only (very slow)
+                # Show CPU/RAM info instead
+                cpu_count = psutil.cpu_count(logical=True)
+                ram = psutil.virtual_memory()
+                ram_total = ram.total / (1024**3)
+                ram_available = ram.available / (1024**3)
+                st.markdown(f"""
+                - **CPU:** {cpu_count} cores
+                - **RAM:** {ram_available:.1f} / {ram_total:.1f} GB free
+                - **Status:** 🖥️ CPU Mode
                 """)
+        except ImportError:
+            st.markdown("- **Status:** Unknown (install psutil)")
         except:
             st.markdown("- **Status:** Unknown")
         with st.expander("What's this?", expanded=False):
             st.markdown("""
-            Your **GPU** (graphics card) does the heavy lifting. 
-            **VRAM** is GPU memory - you need enough to fit the model and training data.
+            **GPU mode:** Uses VRAM for fast training.
+            **CPU mode:** Uses system RAM - slower but works fine for smaller models.
             """)
 
 

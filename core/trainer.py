@@ -37,6 +37,10 @@ class TrainingProgress:
     estimated_remaining: float = 0.0
     vram_used_gb: float = 0.0
     vram_total_gb: float = 0.0
+    ram_used_gb: float = 0.0
+    ram_total_gb: float = 0.0
+    cpu_percent: float = 0.0
+    is_gpu_mode: bool = True
     samples_per_second: float = 0.0
     status: str = "idle"  # idle, training, paused, completed, error
     
@@ -52,6 +56,10 @@ class TrainingProgress:
             "estimated_remaining": self.estimated_remaining,
             "vram_used_gb": self.vram_used_gb,
             "vram_total_gb": self.vram_total_gb,
+            "ram_used_gb": self.ram_used_gb,
+            "ram_total_gb": self.ram_total_gb,
+            "cpu_percent": self.cpu_percent,
+            "is_gpu_mode": self.is_gpu_mode,
             "samples_per_second": self.samples_per_second,
             "status": self.status,
             "progress_percent": (self.current_step / self.total_steps * 100) if self.total_steps > 0 else 0
@@ -175,11 +183,26 @@ class Trainer:
             except Exception as e:
                 logger.error(f"Progress callback error: {e}")
     
-    def _update_vram_usage(self):
-        """Update VRAM usage in progress."""
+    def _update_memory_usage(self):
+        """Update memory usage in progress (VRAM for GPU, RAM for CPU)."""
         if torch.cuda.is_available():
+            self.progress.is_gpu_mode = True
             self.progress.vram_used_gb = torch.cuda.memory_allocated() / (1024**3)
             self.progress.vram_total_gb = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+        else:
+            self.progress.is_gpu_mode = False
+            # Track RAM and CPU usage for CPU mode
+            try:
+                import psutil
+                ram = psutil.virtual_memory()
+                self.progress.ram_used_gb = ram.used / (1024**3)
+                self.progress.ram_total_gb = ram.total / (1024**3)
+                self.progress.cpu_percent = psutil.cpu_percent(interval=0)
+                # Also populate vram fields with RAM values for backward compatibility
+                self.progress.vram_used_gb = self.progress.ram_used_gb
+                self.progress.vram_total_gb = self.progress.ram_total_gb
+            except ImportError:
+                logger.warning("psutil not installed - RAM metrics unavailable")
     
     def prepare_model(self, model_name_or_path: str):
         """
@@ -253,8 +276,11 @@ class Trainer:
             f"({100 * trainable_params / total_params:.2f}%)"
         )
         
-        self._update_vram_usage()
-        logger.info(f"VRAM usage after model load: {self.progress.vram_used_gb:.2f} GB")
+        self._update_memory_usage()
+        if self.progress.is_gpu_mode:
+            logger.info(f"VRAM usage after model load: {self.progress.vram_used_gb:.2f} GB")
+        else:
+            logger.info(f"RAM usage after model load: {self.progress.ram_used_gb:.2f} GB (CPU mode)")
         
         return self.model, self.tokenizer
     
@@ -413,7 +439,7 @@ class Trainer:
                 
                 trainer.progress.current_step = state.global_step
                 trainer.progress.current_epoch = state.epoch or 0
-                trainer._update_vram_usage()
+                trainer._update_memory_usage()
                 
                 # Calculate time estimates
                 if state.global_step > 0:

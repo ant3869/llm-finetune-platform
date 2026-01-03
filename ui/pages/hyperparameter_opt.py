@@ -78,14 +78,20 @@ def render_hpo_configuration():
             st.code(f"{len(st.session_state.training_samples)} samples")
         
         with col3:
-            st.markdown("**GPU:**")
+            st.markdown("**Hardware:**")
             try:
                 import torch
+                import psutil
                 if torch.cuda.is_available():
                     vram = torch.cuda.get_device_properties(0).total_memory / (1024**3)
-                    st.code(f"{vram:.1f} GB VRAM")
+                    st.code(f"🎮 GPU: {vram:.1f} GB VRAM")
                 else:
-                    st.code("CPU only")
+                    ram = psutil.virtual_memory()
+                    ram_total = ram.total / (1024**3)
+                    cpu_count = psutil.cpu_count(logical=True)
+                    st.code(f"🖥️ CPU: {cpu_count} cores, {ram_total:.0f} GB RAM")
+            except ImportError:
+                st.code("Unknown (install psutil)")
             except:
                 st.code("Unknown")
     
@@ -165,13 +171,19 @@ def render_hpo_configuration():
     with col3:
         st.metric("Total Est. Time", estimate["formatted"])
     
-    # VRAM warning
+    # Memory warning
     try:
         import torch
+        import psutil
         if torch.cuda.is_available():
             vram = torch.cuda.get_device_properties(0).total_memory / (1024**3)
             if vram < 8 and any(l > 512 for l in search_space.get("max_seq_lengths", [512])):
                 st.warning("⚠️ Some configurations may exceed your VRAM. Consider reducing max_seq_length.")
+        else:
+            # CPU mode warning
+            ram = psutil.virtual_memory()
+            ram_available = ram.available / (1024**3)
+            st.info(f"🖥️ **CPU Mode:** Training will use system RAM ({ram_available:.1f} GB available). Expect ~5-10x longer training times.")
     except:
         pass
     

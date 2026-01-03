@@ -45,6 +45,8 @@ class TrainingMetrics:
 
 def render_progress_header(progress: Dict[str, Any]):
     """Render the progress header with key metrics."""
+    is_gpu_mode = progress.get('is_gpu_mode', True)
+    
     col1, col2, col3, col4, col5 = st.columns(5)
     
     # Cap progress at 100% for display
@@ -76,12 +78,22 @@ def render_progress_header(progress: Dict[str, Any]):
         )
     
     with col5:
-        vram_used = progress.get('vram_used_gb', 0)
-        vram_total = progress.get('vram_total_gb', 8)
-        st.metric(
-            "VRAM",
-            f"{vram_used:.1f}/{vram_total:.1f} GB"
-        )
+        if is_gpu_mode:
+            vram_used = progress.get('vram_used_gb', 0)
+            vram_total = progress.get('vram_total_gb', 8)
+            st.metric(
+                "VRAM",
+                f"{vram_used:.1f}/{vram_total:.1f} GB"
+            )
+        else:
+            ram_used = progress.get('ram_used_gb', progress.get('vram_used_gb', 0))
+            ram_total = progress.get('ram_total_gb', progress.get('vram_total_gb', 16))
+            cpu_pct = progress.get('cpu_percent', 0)
+            st.metric(
+                "RAM",
+                f"{ram_used:.1f}/{ram_total:.1f} GB",
+                delta=f"CPU: {cpu_pct:.0f}%"
+            )
 
 
 def render_progress_bar(progress: Dict[str, Any]):
@@ -128,15 +140,17 @@ def format_time(seconds: float) -> str:
         return f"{secs}s"
 
 
-def render_loss_chart(metrics: TrainingMetrics):
+def render_loss_chart(metrics: TrainingMetrics, is_gpu_mode: bool = True):
     """Render the loss chart."""
     if not metrics.steps:
         st.info("Loss chart will appear when training starts...")
         return
     
+    memory_label = "VRAM Usage" if is_gpu_mode else "RAM Usage"
+    
     fig = make_subplots(
         rows=1, cols=2,
-        subplot_titles=("Training Loss", "VRAM Usage"),
+        subplot_titles=("Training Loss", memory_label),
         horizontal_spacing=0.1
     )
     
@@ -153,13 +167,14 @@ def render_loss_chart(metrics: TrainingMetrics):
         row=1, col=1
     )
     
-    # VRAM usage
+    # Memory usage (VRAM or RAM)
+    memory_name = 'VRAM (GB)' if is_gpu_mode else 'RAM (GB)'
     fig.add_trace(
         go.Scatter(
             x=metrics.steps,
             y=metrics.vram_usage,
             mode='lines+markers',
-            name='VRAM (GB)',
+            name=memory_name,
             line=dict(color='#2196F3', width=2),
             marker=dict(size=4),
             fill='tozeroy',
@@ -283,6 +298,7 @@ class ProgressTracker:
         self.current_progress = {}
         self.log_entries = []
         self.status = "idle"
+        self.is_gpu_mode = True
     
     def update(self, progress):
         """Callback to receive progress updates from trainer."""
@@ -292,19 +308,22 @@ class ProgressTracker:
         
         self.current_progress = progress
         self.status = progress.get('status', 'training')
+        self.is_gpu_mode = progress.get('is_gpu_mode', True)
         
         # Add to metrics history
         step = progress.get('current_step', 0)
         loss = progress.get('loss', 0)
         lr = progress.get('learning_rate', 0)
-        vram = progress.get('vram_used_gb', 0)
+        # Use RAM for CPU mode, VRAM for GPU mode
+        memory = progress.get('vram_used_gb', 0)
         
         if step > 0 and (not self.metrics.steps or step > self.metrics.steps[-1]):
-            self.metrics.add_point(step, loss, lr, vram)
+            self.metrics.add_point(step, loss, lr, memory)
             
-            # Add log entry
+            # Add log entry with appropriate label
+            memory_label = "VRAM" if self.is_gpu_mode else "RAM"
             self.log_entries.append(
-                f"[Step {step}] Loss: {loss:.4f} | LR: {lr:.2e} | VRAM: {vram:.1f}GB"
+                f"[Step {step}] Loss: {loss:.4f} | LR: {lr:.2e} | {memory_label}: {memory:.1f}GB"
             )
     
     def render(self):
@@ -312,7 +331,7 @@ class ProgressTracker:
         render_training_status(self.status)
         render_progress_header(self.current_progress)
         render_progress_bar(self.current_progress)
-        render_loss_chart(self.metrics)
+        render_loss_chart(self.metrics, self.is_gpu_mode)
     
     def reset(self):
         """Reset the tracker for a new training run."""
